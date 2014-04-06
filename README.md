@@ -41,9 +41,10 @@ Well kinda. Not that I think writing my own code is the the best, but...
 * I thought a Node-based approach is the way to go. (Akin to WebAudioAPI, Quartz Composer. Perhaps one day I'll build a node base UI for this as well)
 * I'm experimenting and learning on the way
 
-Just in case you're looking for alternatives
+Just in case you're looking for related node-based / post-processing stuff
 * Three.js examples uses EffectComposer by @alteredq. They come right out of the box with three.js
 * @thespite is working on [Wagner](https://github.com/spite/Wagner), his improved version of EffectComposer
 * [ShaderGraph](https://github.com/unconed/ShaderGraph.js) by Unconed. Pretty much uses a node based approach, and is used to power [MathBox](https://github.com/unconed/MathBox.js/).
 * [PP.js](https://github.com/rdad/PP.js/) also a post-processing library for three.js with a fluent-style api.
 * [Seriously.js](https://github.com/brianchirls/Seriously.js/) Node based compositor for videos with WebGL. 
+* [ThreeNodes.js](http://idflood.github.io/ThreeNodes.js/) A web-based Visual Node-base system for Three.js
