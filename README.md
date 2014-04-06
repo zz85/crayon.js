@@ -28,7 +28,7 @@ Sample Code
 ##Q&A
 _Why is this called Crayon?_
 
-1. I think we started drawing with crayon when we were kids. I hope this library is akin to digitial crayons, where I start to explore creating beautiful drawing and paintings.
+1. I think we started drawing with crayon when we were kids. I hope this library is akin to digital crayons, where I start to explore creating beautiful drawing and paintings.
 2. This library was created to help myself when I decided to work on some NPR (Non-Photorealistic Rendering) experiments eg. pencil, toon, watercolor shadings. Perhaps, I might be able to create an interactive crayon shader one day.
 
 _Is this yet another post-processing / shader library?_
@@ -48,3 +48,4 @@ Just in case you're looking for related node-based / post-processing stuff
 * [PP.js](https://github.com/rdad/PP.js/) also a post-processing library for three.js with a fluent-style api.
 * [Seriously.js](https://github.com/brianchirls/Seriously.js/) Node based compositor for videos with WebGL. 
 * [ThreeNodes.js](http://idflood.github.io/ThreeNodes.js/) A web-based Visual Node-base system for Three.js
+* [Reflektor Sandbox Graph](https://github.com/unit9/justareflektor/tree/master/sandbox) A rather nice node library for the [Reflektor project](https://www.justareflektor.com/tech).
