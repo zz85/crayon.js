@@ -46,3 +46,4 @@ Just in case you're looking for alternatives
 * @thespite is working on [Wagner](https://github.com/spite/Wagner), his improved version of EffectComposer
 * [ShaderGraph](https://github.com/unconed/ShaderGraph.js) by Unconed. Pretty much uses a node based approach, and is used to power [MathBox](https://github.com/unconed/MathBox.js/).
 * [PP.js](https://github.com/rdad/PP.js/) also a post-processing library for three.js with a fluent-style api.
+* [Seriously.js](https://github.com/brianchirls/Seriously.js/) Node based compositor for videos with WebGL. 
