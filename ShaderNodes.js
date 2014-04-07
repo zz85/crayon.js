@@ -3,27 +3,18 @@ window.CRAYON = {
 
 	extends: function( name, parent, map ) {
 
-		if ( !parent ) {
-
-			parent = Object;
-
-		} else {
-
-			parent = this[ parent ];
-
-		}
 		this[ name ] = map.init;
 		this[ name ].prototype = Object.create( parent.prototype );
 		this[ name ].prototype.name = name;
 
-		for (var n in map) {
+		for ( var n in map ) {
+
 			if ( n != 'init') {
 				this[ name ].prototype[ n ] = map[ n ];
 			}
+
 		}
-
 	}
-
 };
 
 
@@ -34,7 +25,7 @@ var height = innerHeight;
 
 // A Shader Node has a render target and a render/pass/run/update function
 
-CRAYON.extends('ShaderNode', null, {
+CRAYON.extends('ShaderNode', Object, {
 
 	init: function() {
 
@@ -70,7 +61,7 @@ CRAYON.extends('ShaderNode', null, {
 
 
 // Post Process Node uses a shader material
-CRAYON.extends( 'PostProcessNode', 'ShaderNode', {
+CRAYON.extends( 'PostProcessNode', CRAYON.ShaderNode, {
 
 	init: function (renderer, material) {
 
@@ -95,29 +86,37 @@ CRAYON.extends( 'PostProcessNode', 'ShaderNode', {
 
 } );
 
-CRAYON.extends( 'InputConnector', null, {
+CRAYON.extends( 'InputConnector', Object, {
 
-	init: function(node) {
+	init: function( node ) {
+
 		this.requirements = [];
 		this.connectedFrom = {};
 		this.node = node;
+		
 	},
 
 	requires: function() {
+
 		this.requirements = Array.prototype.slice.call(arguments);	
+
 	},
 
-	link: function(from, name) {
+	link: function( from, name ) {
+
 		this.connectedFrom[name] = from;
 
 		if ( this.node instanceof CRAYON.ExecutorNode ) {
 
 		} else if ( this.node instanceof CRAYON.PostProcessNode) {
-			if (!(name in this.node.material.uniforms)) {
+			
+			if ( ! ( name in this.node.material.uniforms ) ) {
 				// Sanity check for target uniform, else warn
 				console.log('No uniform found' + name)
 			}
+
 			this.node.material.uniforms[name].value = from.renderTarget;
+
 		} else {
 			// Support for non-render nodes?
 			console.log('Not linking textures', from.name, name)
@@ -126,37 +125,42 @@ CRAYON.extends( 'InputConnector', null, {
 		}
 	},
 
-	preRenderCheck: function(visited) {
+	preRenderCheck: function( visited ) {
 		// Depth first dependency checking.
 		// See http://en.wikipedia.org/wiki/Topological_sorting#Algorithms
 
-		if (!visited) visited = [];
+		if ( !visited ) visited = [];
 
 		var names = this.requirements, name, node;
 
-		if (this.checked) {
+		if ( visited.indexOf( this.node ) > -1 ) {
+
 			console.log('preRenderCheck already ran');
 			return visited;
+
 		}
-		this.checked = false; // or could use index of for checking.
 
-		if (names.length != 0)  {
-			for (var i=0; i < names.length; i++) {
-				name = names[i];
-				node = this.connectedFrom[name];
+		for ( var i=0; i < names.length; i++ ) {
 
-				if (!node) {
-					console.warn(this.node.name + ' has missing Input Node ["' + name +  '"]');
-				} else {
-					if (!node.inputs.checked) {
-						node.inputs.preRenderCheck(visited);
-					}
+			name = names[i];
+			node = this.connectedFrom[name];
+
+			if (!node) {
+
+				console.warn(this.node.name + ' has missing Input Node ["' + name +  '"]');
+
+			} else {
+
+				if ( visited.indexOf( node ) == -1 ) {
+
+					node.inputs.preRenderCheck( visited );
+
 				}
 			}
 		}
 
 		visited.push( this.node );
-		this.checked = true;
+
 		return visited;
 	}
 
@@ -167,7 +171,7 @@ CRAYON.extends( 'InputConnector', null, {
  *	Endpoint of graphs should lead to an executor node
  */
 
-CRAYON.extends( 'ExecutorNode', 'ShaderNode', {
+CRAYON.extends( 'ExecutorNode', CRAYON.ShaderNode, {
 
 	init: function ( renderer ) {
 
@@ -185,6 +189,7 @@ CRAYON.extends( 'ExecutorNode', 'ShaderNode', {
 	renderAll: function() {
 		
 		if (!this.nodesToRender) {
+
 			this.nodesToRender = this.inputs.preRenderCheck();
 			console.log('Lists of nodes to render', this.nodesToRender);
 		}
@@ -192,8 +197,10 @@ CRAYON.extends( 'ExecutorNode', 'ShaderNode', {
 		var nodesToRender = this.nodesToRender;
 
 		for (var i=0; i<nodesToRender.length; i++) {
+
 			var node = nodesToRender[i];
 			node.render();
+
 		}
 	}
 
@@ -201,7 +208,7 @@ CRAYON.extends( 'ExecutorNode', 'ShaderNode', {
 } );
 
 
-CRAYON.extends( 'RenderToScreenNode', 'PostProcessNode', {
+CRAYON.extends( 'RenderToScreenNode', CRAYON.PostProcessNode, {
 
 	init: function ( renderer ) {
 
@@ -311,7 +318,7 @@ THREE.EdgeShader2 = {
 
 
 
-CRAYON.extends( 'EdgeFilterNode', 'PostProcessNode', {
+CRAYON.extends( 'EdgeFilterNode', CRAYON.PostProcessNode, {
 
 	init: function() {
 
@@ -382,7 +389,7 @@ THREE.MultiplyNode = {
 
 };
 
-CRAYON.extends( 'MultiplyNode', 'PostProcessNode', {
+CRAYON.extends( 'MultiplyNode', CRAYON.PostProcessNode, {
 
 	init: function() {
 
@@ -396,114 +403,8 @@ CRAYON.extends( 'MultiplyNode', 'PostProcessNode', {
 
 } );
 
-CRAYON.extends( 'SceneNode', 'ShaderNode', {
 
-	init: function() {
-
-		CRAYON.ShaderNode.call( this );
-		// Renders scene to Render Target				
-		camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 1, 1000 );
-		// camera.position.z = 400;
-
-		camera.position.y = 150;
-		camera.position.z = 500;
-
-
-		scene = new THREE.Scene();
-		renderer.setClearColor( 0xffffff );
-
-		var geometry = new THREE.CubeGeometry( 200, 200, 200 );
-
-		material_depth = new THREE.MeshDepthMaterial();
-		
-
-		function phongMaterial(ambient, diffuse, shiny, power) {
-			return new THREE.MeshPhongMaterial({
-				emissive : ambient,
-				color    : diffuse,
-				specular : shiny,
-				shininess: power
-			});
-		}
-
-		function directionalLight(x, y, z, color) {
-			var light = new THREE.DirectionalLight(color);
-			light.position.set(x,y,z).normalize();
-			return light;
-		}
-
-		var material = new THREE.MeshBasicMaterial( { // MeshPhongMaterial MeshLambertMaterial
-			color: 0xfa9204, 
-			// shading: THREE.FlatShading
-		} );
-
-
-		// material = phongMaterial(0x333333, 0xfa9204, 0xffffff, 30)
-		// scene.add(new THREE.AmbientLight(0x333333));
-		scene.add(directionalLight(.2,0,1, 0xffffff));
-
-
-		cube = new THREE.Mesh( geometry, material );
-		scene.add( cube );
-
-		// var geometry = new THREE.TorusKnotGeometry( 150 );
-		// for ( var i = 0, j = geometry.faces.length; i < j; i ++ ) {
-
-		// 	geometry.faces[ i ].color.setHex( Math.random() * 0xffffff );
-
-		// }
-		// torus = new THREE.Mesh( geometry, new THREE.MeshLambertMaterial( { color: 0x0000ff, vertexColors: THREE.FaceColors } ) );
-
-		// scene.add( torus );
-
-		// new THREE.MeshLambertMaterial( { shading: THREE.FlatShading } )
-
-
-		sphere = new THREE.Mesh( new THREE.SphereGeometry( 200, 20, 10 ), material );
-		sphere.position.z = -200;
-
-		sphere2 = new THREE.Mesh( new THREE.SphereGeometry( 100, 20, 10 ), material );
-		sphere2.position.set(200, 0, -40);
-
-		scene.add( sphere );
-		scene.add( sphere2 );
-
-
-
-		var material = new THREE.MeshBasicMaterial( { color: 0xe0e0e0 } );
-
-		plane = new THREE.Mesh( geometry, material );
-		plane.position.y = - 200;
-		plane.rotation.x = - Math.PI / 2;
-		scene.add( plane );
-
-	},
-
-
-	render: function() {
-
-		var timer = Date.now();
-
-		cube.rotation.y = timer * 0.0005;
-
-		sphere.position.y = Math.abs( Math.sin( timer * 0.002 ) ) * 150;
-		sphere.rotation.x = timer * 0.0003;
-		sphere.rotation.z = timer * 0.0002;
-
-		sphere2.position.y = Math.abs( Math.sin( timer * 0.004 ) ) * 100;
-		sphere2.rotation.x = timer * 0.0013;
-		sphere2.rotation.z = timer * 0.0002;
-
-
-		// mesh.rotation.x += 0.005;
-		// mesh.rotation.y += 0.01;
-
-		renderer.render( scene, camera, this.renderTarget );
-	}
-
-} );
-
-CRAYON.extends( 'SceneDepthNode', 'ShaderNode', {
+CRAYON.extends( 'SceneDepthNode', CRAYON.ShaderNode, {
 
 	init: function( sceneNode ) {
 		CRAYON.ShaderNode.call( this );
@@ -524,9 +425,7 @@ CRAYON.extends( 'SceneDepthNode', 'ShaderNode', {
 
 });
 
-
-
-CRAYON.extends( 'GradientEncoderNode', 'PostProcessNode', {
+CRAYON.extends( 'GradientEncoderNode', CRAYON.PostProcessNode, {
 	
 	init: function ( previousNode, top ) {
 
@@ -578,7 +477,7 @@ CRAYON.extends( 'GradientEncoderNode', 'PostProcessNode', {
 
 });
 
-CRAYON.extends( 'FloatEncoderNode', 'PostProcessNode', {
+CRAYON.extends( 'FloatEncoderNode', CRAYON.PostProcessNode, {
 
 	init: function ( previousNode ) {
 
@@ -629,9 +528,11 @@ CRAYON.extends( 'FloatEncoderNode', 'PostProcessNode', {
 } );
 
 
-// function ParticleRendererNode( sceneNode ) {
-// 	ShaderNode.call( this );
-// }
+// CRAYON.extends( 'ParticleRendererNode', CRAYON.PostProcessNode, {
+
+// 	CRAYON.PostProcessNode.call( this, )
+
+// } );
 
 // CRAYON.extends('ParticleRendererNode', ShaderNode);
 

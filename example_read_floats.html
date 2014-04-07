@@ -180,6 +180,116 @@
 
 				//
 
+				CRAYON.extends( 'SceneNode', CRAYON.ShaderNode, {
+
+					init: function() {
+
+						CRAYON.ShaderNode.call( this );
+						// Renders scene to Render Target				
+						camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 1, 1000 );
+						// camera.position.z = 400;
+
+						camera.position.y = 150;
+						camera.position.z = 500;
+
+
+						scene = new THREE.Scene();
+						renderer.setClearColor( 0xffffff );
+
+						var geometry = new THREE.CubeGeometry( 200, 200, 200 );
+
+						material_depth = new THREE.MeshDepthMaterial();
+						
+
+						function phongMaterial(ambient, diffuse, shiny, power) {
+							return new THREE.MeshPhongMaterial({
+								emissive : ambient,
+								color    : diffuse,
+								specular : shiny,
+								shininess: power
+							});
+						}
+
+						function directionalLight(x, y, z, color) {
+							var light = new THREE.DirectionalLight(color);
+							light.position.set(x,y,z).normalize();
+							return light;
+						}
+
+						var material = new THREE.MeshBasicMaterial( { // MeshPhongMaterial MeshLambertMaterial
+							color: 0xfa9204, 
+							// shading: THREE.FlatShading
+						} );
+
+
+						// material = phongMaterial(0x333333, 0xfa9204, 0xffffff, 30)
+						// scene.add(new THREE.AmbientLight(0x333333));
+						scene.add(directionalLight(.2,0,1, 0xffffff));
+
+
+						cube = new THREE.Mesh( geometry, material );
+						scene.add( cube );
+
+						// var geometry = new THREE.TorusKnotGeometry( 150 );
+						// for ( var i = 0, j = geometry.faces.length; i < j; i ++ ) {
+
+						// 	geometry.faces[ i ].color.setHex( Math.random() * 0xffffff );
+
+						// }
+						// torus = new THREE.Mesh( geometry, new THREE.MeshLambertMaterial( { color: 0x0000ff, vertexColors: THREE.FaceColors } ) );
+
+						// scene.add( torus );
+
+						// new THREE.MeshLambertMaterial( { shading: THREE.FlatShading } )
+
+
+						sphere = new THREE.Mesh( new THREE.SphereGeometry( 200, 20, 10 ), material );
+						sphere.position.z = -200;
+
+						sphere2 = new THREE.Mesh( new THREE.SphereGeometry( 100, 20, 10 ), material );
+						sphere2.position.set(200, 0, -40);
+
+						scene.add( sphere );
+						scene.add( sphere2 );
+
+
+
+						var material = new THREE.MeshBasicMaterial( { color: 0xe0e0e0 } );
+
+						plane = new THREE.Mesh( geometry, material );
+						plane.position.y = - 200;
+						plane.rotation.x = - Math.PI / 2;
+						scene.add( plane );
+
+					},
+
+
+					render: function() {
+
+						var timer = Date.now();
+
+						cube.rotation.y = timer * 0.0005;
+
+						sphere.position.y = Math.abs( Math.sin( timer * 0.002 ) ) * 150;
+						sphere.rotation.x = timer * 0.0003;
+						sphere.rotation.z = timer * 0.0002;
+
+						sphere2.position.y = Math.abs( Math.sin( timer * 0.004 ) ) * 100;
+						sphere2.rotation.x = timer * 0.0013;
+						sphere2.rotation.z = timer * 0.0002;
+
+
+						// mesh.rotation.x += 0.005;
+						// mesh.rotation.y += 0.01;
+
+						renderer.render( scene, camera, this.renderTarget );
+					}
+
+				} );
+
+
+				//
+
 				sceneNode = new CRAYON.SceneNode();
 				sceneDepthNode = new CRAYON.SceneDepthNode( sceneNode );
 				screenNode = new CRAYON.RenderToScreenNode( renderer );
@@ -197,8 +307,6 @@
 				sceneDepthNode.connect(edgeNode, 'texture')
 				sceneDepthNode.connect(gradientX, 'texture')
 				sceneDepthNode.connect(gradientY, 'texture')
-
-
 
 
 				// sceneNode.connect(edgeNode, 'texture');
@@ -244,10 +352,11 @@
 				canvas.style.cssText = 'position:absolute; top: 0; left: 0; float: left;'
 
 				ctx = canvas.getContext('2d')
-				ctx.fillStyle = 'red'
-				// ctx.fillStyle = 'black'
-				ctx.globalAlpha = 0.5
+				// ctx.fillStyle = 'red'
+				ctx.fillStyle = 'yellow'
+				ctx.globalAlpha = 0.2
 				var x, y;
+
 
 				var meh = 0;
 
@@ -257,13 +366,14 @@
 						meh++;
 					}
 				}
+
 				console.log('meh', meh);
 
 				particles = [];
 
 				console.time('start')
 
-				for (p=0;p<15000;p++) {
+				for ( p=0; p<20000; p++) {
 					x = Math.random() * width | 0;
 					y = Math.random() * height | 0;
 					size = 2 + Math.random() * 4;
@@ -273,6 +383,7 @@
 							// dx: Math.random() - 0.5, dy:Math.random() - 0.5
 							dx:0 , dy: 0
 						});
+
 						ctx.beginPath();
 						ctx.arc(x, y, size, 0, 2 * Math.PI);
 						ctx.fill();
@@ -284,7 +395,11 @@
 
 				console.log('particles', particles.length)
 				
-				setInterval(renderParticles, 100);
+				// setInterval(renderParticles, 100);
+
+				for ( i = 0; i < 20; i++ ) {
+					renderParticles();
+				}
 
 				document.body.appendChild( canvas );
 
@@ -302,19 +417,16 @@
 					y = particle.y | 0;
 					x = particle.x | 0;
 					
-					ax = -gradientY.pixels32[(height-y) * width + x] * 1000 // perpenticular
-					ay = gradientX.pixels32[(height-y) * width + x] * 1000
+					dx = -gradientY.pixels32[(height-y) * width + x] * 100 // perpenticular
+					dy = gradientX.pixels32[(height-y) * width + x] * 100
 
-					particle.dx += ax;
-					particle.dy += ay;
-
-					particle.dx = Math.max(Math.min(particle.dx, 4), -4)
-					particle.dy = Math.max(Math.min(particle.dy, 4), -4)
+					dx = Math.max(Math.min(particle.dx, 4), -4)
+					dy = Math.max(Math.min(particle.dy, 4), -4)
 
 					// if (Math.random()< 0.001) console.log(dx, dy);
 
-					particle.x += particle.dx;
-					particle.y += particle.dy;
+					particle.x += dx;
+					particle.y += dy;
 
 					ctx.beginPath();
 					ctx.arc(x, y, particle.size, 0, 2 * Math.PI);
