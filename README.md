@@ -32,6 +32,13 @@ A complex code sample showcasing the API flexibility
 ```
 
 ##Q&A
+
+_Why Crayon?__
+* For managable post-processing rendering
+* Each node have a renderTarget or an output
+* Makes it easy to rewire nodes without spaghetti code
+
+
 _Why is this called Crayon?_
 
 1. Crayons are for drawing or learning how to. I think we started with crayon when we were kids. I hope this library is akin to digital crayons, where I start to explore creating beautiful drawing and paintings.

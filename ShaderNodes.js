@@ -223,7 +223,7 @@ CRAYON.extends( 'RenderToScreenNode', 'PostProcessNode', {
 
 		
 		CRAYON.PostProcessNode.call( this, renderer, shaderMaterial );
-		this.inputs.requires('texture', 'gradientX', 'gradientY', 'edge');
+		this.inputs.requires('texture');
 
 	},
 
