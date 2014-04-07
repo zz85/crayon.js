@@ -109,7 +109,10 @@ CRAYON.extends( 'InputConnector', null, {
 
 	link: function(from, name) {
 		this.connectedFrom[name] = from;
-		if (this.node instanceof CRAYON.PostProcessNode) {
+
+		if ( this.node instanceof CRAYON.ExecutorNode ) {
+
+		} else if ( this.node instanceof CRAYON.PostProcessNode) {
 			if (!(name in this.node.material.uniforms)) {
 				// Sanity check for target uniform, else warn
 				console.log('No uniform found' + name)
@@ -117,7 +120,7 @@ CRAYON.extends( 'InputConnector', null, {
 			this.node.material.uniforms[name].value = from.renderTarget;
 		} else {
 			// Support for non-render nodes?
-			// console.log('Not linking textures', from.name, name)
+			console.log('Not linking textures', from.name, name)
 
 			// 
 		}
@@ -159,6 +162,44 @@ CRAYON.extends( 'InputConnector', null, {
 
 } );
 
+/*
+ * Executor Node.
+ *	Endpoint of graphs should lead to an executor node
+ */
+
+CRAYON.extends( 'ExecutorNode', 'ShaderNode', {
+
+	init: function ( renderer ) {
+
+		CRAYON.ShaderNode.call( this, renderer );
+		this.inputs.requires('texture', 'gradientX', 'gradientY', 'edge');
+
+	},
+
+	render: function() {
+
+		// this.renderAll();
+
+	},
+
+	renderAll: function() {
+		
+		if (!this.nodesToRender) {
+			this.nodesToRender = this.inputs.preRenderCheck();
+			console.log('Lists of nodes to render', this.nodesToRender);
+		}
+
+		var nodesToRender = this.nodesToRender;
+
+		for (var i=0; i<nodesToRender.length; i++) {
+			var node = nodesToRender[i];
+			node.render();
+		}
+	}
+
+
+} );
+
 
 CRAYON.extends( 'RenderToScreenNode', 'PostProcessNode', {
 
@@ -189,24 +230,7 @@ CRAYON.extends( 'RenderToScreenNode', 'PostProcessNode', {
 	render: function() {
 		// this.renderer.clear();
 		this.renderer.render( this.scene, this.camera );
-	},
-
-
-	renderAll: function() {
-		
-		if (!this.nodesToRender) {
-			this.nodesToRender = this.inputs.preRenderCheck();
-			console.log('Lists of nodes to render', this.nodesToRender);
-		}
-
-		var nodesToRender = this.nodesToRender;
-
-		for (var i=0; i<nodesToRender.length; i++) {
-			var node = nodesToRender[i];
-			node.render();
-		}
 	}
-
 
 } );
 
