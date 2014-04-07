@@ -180,15 +180,15 @@
 
 				//
 
-				sceneNode = new SceneNode();
-				sceneDepthNode = new SceneDepthNode( sceneNode );
-				screenNode = new RenderToScreenNode( renderer );
-				edgeNode = new EdgeFilterNode( renderer );
-				multiplyNode = new MultiplyNode( renderer );
-				edgeFloatNode = new FloatEncoderNode( edgeNode );
+				sceneNode = new CRAYON.SceneNode();
+				sceneDepthNode = new CRAYON.SceneDepthNode( sceneNode );
+				screenNode = new CRAYON.RenderToScreenNode( renderer );
+				edgeNode = new CRAYON.EdgeFilterNode( renderer );
+				multiplyNode = new CRAYON.MultiplyNode( renderer );
+				edgeFloatNode = new CRAYON.FloatEncoderNode( edgeNode );
 
-				gradientX = new GradientEncoderNode( sceneDepthNode, 0 );
-				gradientY = new GradientEncoderNode( sceneDepthNode, 1 );
+				gradientX = new CRAYON.GradientEncoderNode( sceneDepthNode, 0 );
+				gradientY = new CRAYON.GradientEncoderNode( sceneDepthNode, 1 );
 
 				
 				sceneNode.connect(sceneDepthNode, 'fake');
