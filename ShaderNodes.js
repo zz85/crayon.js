@@ -1,31 +1,58 @@
 // NAMESPACE
 window.CRAYON = {
 
-	extends: function( name, parent, map ) {
+	extends: function( name, parent, props ) {
 
-		this[ name ] = map.init;
-		this[ name ].prototype = Object.create( parent.prototype );
-		this[ name ].prototype.name = name;
+		var klass = props.init;
+		klass.prototype = Object.create( parent.prototype );
+		klass.prototype.name = name;
+		klass.prototype.super = parent.prototype;
 
-		for ( var n in map ) {
+
+		for ( var n in props ) {
 
 			if ( n != 'init') {
-				this[ name ].prototype[ n ] = map[ n ];
+				klass.prototype[ n ] = props[ n ];
 			}
 
 		}
+
+		this[ name ] = klass;
 	}
 };
-
 
 var width = innerWidth;
 var height = innerHeight;
 
 /*********************************************************************/
 
+
+CRAYON.extends( 'Node', Object, {
+
+	init: function() {
+
+		this.inputs = new CRAYON.InputConnector( this );
+		this.outputs = [];
+	},
+
+	render: function() { // TODO: Rename to execute / update?
+
+		console.warn( 'Please extend ' + this.name + '.render()' );
+
+	},
+
+	connect: function( target, name ) {
+		// TODO: use a default name of 'texture'?
+		target.inputs.link(this, name);
+		// TODO: keep a reference to connected nodes here?
+		
+	}
+
+} );
+
 // A Shader Node has a render target and a render/pass/run/update function
 
-CRAYON.extends('ShaderNode', Object, {
+CRAYON.extends( 'ShaderNode', CRAYON.Node, {
 
 	init: function() {
 
@@ -42,19 +69,17 @@ CRAYON.extends('ShaderNode', Object, {
 		
 		this.renderTarget = renderTarget;
 
-		this.inputs = new CRAYON.InputConnector( this );
+		CRAYON.Node.call( this );
 		
-		// .reinit() / resize()
 	},
 
-	render: function() {
-		console.warn('ShaderNode.render() should be extended');
-	},
+	setSize: function( width, height ) { // TODO resizing to be worked on
 
-	connect: function(target, name) {
-		// name = 'texture';
-		target.inputs.link(this, name);
-		// TODO: Keep a list of connected Nodes
+		var rt = this.renderTarget.clone();
+		rt.width = width;
+		rt.height = height;
+		this.renderTarget = rt;
+
 	}
 
 });
@@ -63,7 +88,7 @@ CRAYON.extends('ShaderNode', Object, {
 // Post Process Node uses a shader material
 CRAYON.extends( 'PostProcessNode', CRAYON.ShaderNode, {
 
-	init: function (renderer, material) {
+	init: function (renderer, material) { // TODO parameters to be worked on
 
 		CRAYON.ShaderNode.call( this )
 
@@ -108,7 +133,7 @@ CRAYON.extends( 'InputConnector', Object, {
 
 		if ( this.node instanceof CRAYON.ExecutorNode ) {
 
-		} else if ( this.node instanceof CRAYON.PostProcessNode) {
+		} else if ( this.node instanceof CRAYON.PostProcessNode ) {
 			
 			if ( ! ( name in this.node.material.uniforms ) ) {
 				// Sanity check for target uniform, else warn
@@ -125,7 +150,7 @@ CRAYON.extends( 'InputConnector', Object, {
 		}
 	},
 
-	preRenderCheck: function( visited ) {
+	getDependencies: function( visited ) {
 		// Depth first dependency checking.
 		// See http://en.wikipedia.org/wiki/Topological_sorting#Algorithms
 
@@ -135,7 +160,7 @@ CRAYON.extends( 'InputConnector', Object, {
 
 		if ( visited.indexOf( this.node ) > -1 ) {
 
-			console.log('preRenderCheck already ran');
+			console.log('getDependencies already ran');
 			return visited;
 
 		}
@@ -153,7 +178,7 @@ CRAYON.extends( 'InputConnector', Object, {
 
 				if ( visited.indexOf( node ) == -1 ) {
 
-					node.inputs.preRenderCheck( visited );
+					node.inputs.getDependencies( visited );
 
 				}
 			}
@@ -190,7 +215,7 @@ CRAYON.extends( 'ExecutorNode', CRAYON.ShaderNode, {
 		
 		if (!this.nodesToRender) {
 
-			this.nodesToRender = this.inputs.preRenderCheck();
+			this.nodesToRender = this.inputs.getDependencies();
 			console.log('Lists of nodes to render', this.nodesToRender);
 		}
 
