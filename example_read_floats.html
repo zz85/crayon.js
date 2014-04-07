@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>crayon.js - example 1</title>
+		<meta charset="utf-8">
+		<style>
+			body {
+				margin: 0px;
+				background-color: #000000;
+				overflow: hidden;
+			}
+		</style>
+	</head>
+	<body>
+
+		<script src="three.min.js"></script>
+		<script src="ThreeUtils2.js"></script>
+
+
+		<!-- pass through vertex shader -->
+		<script id="vsPass" type="x-shader/x-vertex">
+
+			void main()	{
+
+				gl_Position = vec4( position, 1.0 );
+
+			}
+
+		</script>
+
+		<!-- pass through fragment shader -->
+		<script id="fsPass" type="x-shader/x-fragment">
+
+			uniform vec2 resolution;
+			uniform sampler2D texture;
+
+			void main()	{
+
+				vec2 uv = gl_FragCoord.xy / resolution.xy;
+
+				vec3 color = texture2D( texture, uv ).xyz;
+
+				gl_FragColor=vec4(color,1.0);
+
+			}
+
+		</script>
+		<!-- <script src="toon.js"></script> -->
+
+		<script id="fsGradientEncode" type="x-shader/x-fragment">
+
+			uniform sampler2D texture;
+			uniform vec2 resolution;
+			uniform float top;
+
+
+			float shift_right(float v, float amt) {
+				v = floor(v) + 0.5;
+				return floor(v / exp2(amt));
+			}
+			float shift_left(float v, float amt) {
+				return floor(v * exp2(amt) + 0.5);
+			}
+			float mask_last(float v, float bits) {
+				return mod(v, shift_left(1.0, bits));
+			}
+			float extract_bits(float num, float from, float to) {
+				from = floor(from + 0.5);
+				to = floor(to + 0.5);
+				return mask_last(shift_right(num, from), to - from);
+			}
+			
+			vec4 encode_float(float val) {
+				if (val == 0.0)
+				return vec4(0, 0, 0, 0);
+				float sign = val > 0.0 ? 0.0 : 1.0;
+				val = abs(val);
+				float exponent = floor(log2(val));
+				float biased_exponent = exponent + 127.0;
+				float fraction = ((val / exp2(exponent)) - 1.0) * 8388608.0;
+				float t = biased_exponent / 2.0;
+				float last_bit_of_biased_exponent = fract(t) * 2.0;
+				float remaining_bits_of_biased_exponent = floor(t);
+				float byte4 = extract_bits(fraction, 0.0, 8.0) / 255.0;
+				float byte3 = extract_bits(fraction, 8.0, 16.0) / 255.0;
+				float byte2 = (last_bit_of_biased_exponent * 128.0 + extract_bits(fraction, 16.0, 23.0)) / 255.0;
+				float byte1 = (sign * 128.0 + remaining_bits_of_biased_exponent) / 255.0;
+				return vec4(byte4, byte3, byte2, byte1);
+			}
+
+			void main()	{
+				
+				vec2 uv = gl_FragCoord.xy / resolution.xy;
+
+				vec2 diff = vec2( 1. / resolution.x, 0.);
+				if (top == 1.0) diff = vec2( 0., 1. / resolution.y);
+
+				float val = texture2D( texture, uv + diff).x - texture2D( texture, uv - diff).x ;
+
+				gl_FragColor = encode_float(val);
+
+				// gl_FragColor = vec4(1.0);
+
+			}
+
+
+			
+		</script>
+
+		<script id="fsEncodeFloatX" type="x-shader/x-fragment">
+
+			uniform sampler2D texture;
+			uniform vec2 resolution;
+
+			float shift_right(float v, float amt) {
+				v = floor(v) + 0.5;
+				return floor(v / exp2(amt));
+			}
+			float shift_left(float v, float amt) {
+				return floor(v * exp2(amt) + 0.5);
+			}
+			float mask_last(float v, float bits) {
+				return mod(v, shift_left(1.0, bits));
+			}
+			float extract_bits(float num, float from, float to) {
+				from = floor(from + 0.5);
+				to = floor(to + 0.5);
+				return mask_last(shift_right(num, from), to - from);
+			}
+			
+			vec4 encode_float(float val) {
+				if (val == 0.0)
+				return vec4(0, 0, 0, 0);
+				float sign = val > 0.0 ? 0.0 : 1.0;
+				val = abs(val);
+				float exponent = floor(log2(val));
+				float biased_exponent = exponent + 127.0;
+				float fraction = ((val / exp2(exponent)) - 1.0) * 8388608.0;
+				float t = biased_exponent / 2.0;
+				float last_bit_of_biased_exponent = fract(t) * 2.0;
+				float remaining_bits_of_biased_exponent = floor(t);
+				float byte4 = extract_bits(fraction, 0.0, 8.0) / 255.0;
+				float byte3 = extract_bits(fraction, 8.0, 16.0) / 255.0;
+				float byte2 = (last_bit_of_biased_exponent * 128.0 + extract_bits(fraction, 16.0, 23.0)) / 255.0;
+				float byte1 = (sign * 128.0 + remaining_bits_of_biased_exponent) / 255.0;
+				return vec4(byte4, byte3, byte2, byte1);
+			}
+
+
+			void main()	{
+				
+				vec2 uv = gl_FragCoord.xy / resolution.xy;
+
+				float val = texture2D( texture, uv ).x;
+
+				gl_FragColor = encode_float(val);
+
+				// gl_FragColor = vec4(1.0);
+
+			}
+
+		</script>
+
+
+		<script src="ShaderNodes.js"></script>
+		<script>
+
+
+			var camera, scene, renderer;
+			var mesh;
+
+			init();
+			animate();
+
+			function init() {
+
+				renderer = new THREE.WebGLRenderer();
+				renderer.setSize( window.innerWidth, window.innerHeight );
+				document.body.appendChild( renderer.domElement );
+
+				//
+
+				sceneNode = new SceneNode();
+				sceneDepthNode = new SceneDepthNode( sceneNode );
+				screenNode = new RenderToScreenNode( renderer );
+				edgeNode = new EdgeFilterNode( renderer );
+				multiplyNode = new MultiplyNode( renderer );
+				edgeFloatNode = new FloatEncoderNode( edgeNode );
+
+				gradientX = new GradientEncoderNode( sceneDepthNode, 0 );
+				gradientY = new GradientEncoderNode( sceneDepthNode, 1 );
+
+				
+				sceneNode.connect(sceneDepthNode, 'fake');
+				sceneDepthNode.connect(edgeNode, 'texture')
+				sceneDepthNode.connect(gradientX, 'texture')
+				sceneDepthNode.connect(gradientY, 'texture')
+
+
+
+
+				// sceneNode.connect(edgeNode, 'texture');
+			
+
+
+				edgeNode.connect(edgeFloatNode, 'texture')
+				edgeFloatNode.connect(screenNode, 'edge') // 
+				gradientX.connect(screenNode, 'gradientX') // fake it
+				gradientY.connect(screenNode, 'gradientY') // fake it
+
+				sceneNode.connect(screenNode, 'texture');
+
+
+
+
+				// window.addEventListener( 'resize', onWindowResize, false );
+
+
+
+			}
+
+			function onWindowResize() {
+
+				camera.aspect = window.innerWidth / window.innerHeight;
+				camera.updateProjectionMatrix();
+
+				renderer.setSize( window.innerWidth, window.innerHeight );
+
+			}
+
+			function animate() {
+
+				// requestAnimationFrame( animate );
+				
+				screenNode.renderAll();
+
+				canvas = document.createElement('canvas');
+				canvas.width = width;
+				canvas.height = height;
+				canvas.style.cssText = 'position:absolute; top: 0; left: 0; float: left;'
+
+				ctx = canvas.getContext('2d')
+				ctx.fillStyle = 'red'
+				// ctx.fillStyle = 'black'
+				ctx.globalAlpha = 0.5
+				var x, y;
+
+				var meh = 0;
+
+				for (i=0;i<edgeFloatNode.pixels32.length;i++) {
+					// if (Math.random() < 0.001) console.log(edgeFloatNode.pixels32[i]);
+					if (gradientX.pixels32[i] > 0) {
+						meh++;
+					}
+				}
+				console.log('meh', meh);
+
+				particles = [];
+
+				console.time('start')
+
+				for (p=0;p<15000;p++) {
+					x = Math.random() * width | 0;
+					y = Math.random() * height | 0;
+					size = 2 + Math.random() * 4;
+
+					if (edgeFloatNode.pixels32[(height-y) * width + x] > 0) {
+						particles.push({ x: x, y: y, size: size, 
+							// dx: Math.random() - 0.5, dy:Math.random() - 0.5
+							dx:0 , dy: 0
+						});
+						ctx.beginPath();
+						ctx.arc(x, y, size, 0, 2 * Math.PI);
+						ctx.fill();
+						ctx.closePath();
+					}
+				}
+
+				console.timeEnd('start')
+
+				console.log('particles', particles.length)
+				
+				setInterval(renderParticles, 100);
+
+				document.body.appendChild( canvas );
+
+			}
+
+
+			function renderParticles() {
+
+				var pl = particles.length;
+				var particle;
+
+				for (p=0;p<pl;p++) {
+					particle = particles[p];
+
+					y = particle.y | 0;
+					x = particle.x | 0;
+					
+					ax = -gradientY.pixels32[(height-y) * width + x] * 1000 // perpenticular
+					ay = gradientX.pixels32[(height-y) * width + x] * 1000
+
+					particle.dx += ax;
+					particle.dy += ay;
+
+					particle.dx = Math.max(Math.min(particle.dx, 4), -4)
+					particle.dy = Math.max(Math.min(particle.dy, 4), -4)
+
+					// if (Math.random()< 0.001) console.log(dx, dy);
+
+					particle.x += particle.dx;
+					particle.y += particle.dy;
+
+					ctx.beginPath();
+					ctx.arc(x, y, particle.size, 0, 2 * Math.PI);
+					ctx.fill();
+					ctx.closePath();
+
+					// Check if on white remove.
+
+
+
+				}
+
+			}
+
+		</script>
+
+	</body>
+</html>
