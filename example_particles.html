@@ -41,7 +41,7 @@
 
 				vec3 color = texture2D( texture, uv ).xyz;
 
-				gl_FragColor=vec4(color,1.0);
+				gl_FragColor=vec4(color, 1.0);
 
 			}
 
@@ -185,15 +185,16 @@
 				vec2 uv = vec2( (position.xy + 1.) / 2. ) ;
 				uv3 = uv;
 
-				// vColor = texture2D( color, uv ).xyz;
+				vColor = texture2D( color, uv ).xyz;
 				vEdge = texture2D( texture, uv ).x;
 
 				// modelViewMatrix *
 				vec4 mvPosition =  vec4( position, 1.0 );
 
-				if (vEdge < 0.1) gl_PointSize = 0.;
-
 				gl_PointSize = size;
+
+				if (vEdge < 0.1) gl_PointSize = 0.; // Optimization Trick
+
 				// gl_PointSize = 10.0;
 				// Screen space point
 
@@ -215,14 +216,10 @@
 
 			void main() {
 
-
-
 				if (vEdge < 0.1 ) discard;
 
-				vec3 c = texture2D( color, uv3 ).xyz;
-
 				// gl_FragColor = vec4( vColor.xyz, 1. );
-				gl_FragColor = vec4(texture2D( brush, gl_PointCoord ).xyz * c, 1.);;
+				gl_FragColor = vec4(texture2D( brush, gl_PointCoord ).xyz * vColor, 0.2);;
 
 				// gl_FragColor = vec4( 1.0 * gl_PointCoord.x, .0, 0.0 , 1. );
 				// gl_FragColor =   vec4(texture2D( brush, gl_PointCoord ).xzy, 1.);;
@@ -284,7 +281,7 @@
 
 					this.scene.remove( this.quad );
 
-					var particles = 200000; // 100000;
+					var particles = 300000; // 100000;
 					//
 
 					var geometry = new THREE.BufferGeometry();
@@ -310,7 +307,7 @@
 						positions[ i + 2 ] = 0;
 
 						// width / 500 
-						size[i] = 4 * (Math.random() * 10 + 5);
+						size[i] = 2 * (Math.random() * 2 + 8);
 
 					}
 
@@ -471,14 +468,12 @@
 
 				particleNode = new CRAYON.ParticleRendererNode( renderer );
 
-				
-				// sceneNode.connect(sceneDepthNode, 'fake');
-				// sceneDepthNode.connect(edgeNode, 'texture');
 
-				
+				// sceneNode.connect(edgeNode, 'texture');
 
+				sceneNode.connect(sceneDepthNode, 'fake');
+				sceneDepthNode.connect(edgeNode, 'texture');
 
-				sceneNode.connect(edgeNode, 'texture');
 				edgeNode.connect(particleNode, 'texture');
 				sceneNode.connect(particleNode, 'color');
 				particleNode.connect(screenNode, 'texture');
