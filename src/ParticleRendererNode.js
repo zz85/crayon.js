@@ -9,7 +9,7 @@ CRAYON.extends( 'ParticleRendererNode', CRAYON.PostProcessNode, {
 
 		};
 
-		var texture = THREE.ImageUtils.loadTexture( "textures/snowflake7_alpha.png" );  // spark1.png circle
+		var texture = THREE.ImageUtils.loadTexture( "textures/circle.png" );  // spark1.png circle.png snowflake7_alpha.png
 
 		var uniforms = {
 

@@ -33,7 +33,7 @@ A complex code sample showcasing the API flexibility
 
 ##Q&A
 
-_Why Crayon?__
+_Why Crayon?_
 * Useful for prototyping shader systems
 * Each node encapsulates its own code, so its resuable
 * Each node have a renderTarget or an output

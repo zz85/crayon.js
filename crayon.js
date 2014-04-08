@@ -4,27 +4,27 @@
  *
  */
 
-window.CRAYON = {
+if (!window.CRAYON) CRAYON = {};
 
-	extends: function( name, parent, props ) {
+CRAYON.extends = function( name, parent, props ) {
 
-		var klass = props.init;
-		klass.prototype = Object.create( parent.prototype );
-		klass.prototype.name = name;
-		klass.prototype.super = parent.prototype;
+	var klass = props.init;
+	klass.prototype = Object.create( parent.prototype );
+	klass.prototype.name = name;
+	klass.prototype.super = parent.prototype;
 
 
-		for ( var n in props ) {
+	for ( var n in props ) {
 
-			if ( n != 'init') {
-				klass.prototype[ n ] = props[ n ];
-			}
-
+		if ( n != 'init') {
+			klass.prototype[ n ] = props[ n ];
 		}
 
-		this[ name ] = klass;
 	}
+
+	this[ name ] = klass;
 };
+
 
 var width = innerWidth;
 var height = innerHeight;
@@ -296,7 +296,7 @@ CRAYON.extends( 'RenderToScreenNode', CRAYON.PostProcessNode, {
 
 		};
 
-		var texture = THREE.ImageUtils.loadTexture( "textures/snowflake7_alpha.png" );  // spark1.png circle
+		var texture = THREE.ImageUtils.loadTexture( "textures/circle.png" );  // spark1.png circle.png snowflake7_alpha.png
 
 		var uniforms = {
 
