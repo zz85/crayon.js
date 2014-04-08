@@ -1,4 +1,9 @@
-// NAMESPACE
+/*
+ *  crayon.js
+ *  @author zz85 / https://github.com/zz85
+ *
+ */
+
 window.CRAYON = {
 
 	extends: function( name, parent, props ) {
@@ -88,11 +93,14 @@ CRAYON.extends( 'ShaderNode', CRAYON.Node, {
 // Post Process Node uses a shader material
 CRAYON.extends( 'PostProcessNode', CRAYON.ShaderNode, {
 
-	init: function (renderer, material) { // TODO parameters to be worked on
+	init: function ( renderer, material ) { // TODO parameters to be worked on
 
 		CRAYON.ShaderNode.call( this )
 
-		this.camera = new THREE.OrthographicCamera( -1, 1, 1, -1, 0, 1 );
+		this.camera = new THREE.OrthographicCamera( -1, 1, 1, -1, 0, 10000 );
+
+
+
 		this.quad = new THREE.Mesh( new THREE.PlaneGeometry( 2, 2 ), null );
 		this.scene = new THREE.Scene();
 		this.scene.add( this.quad );
@@ -150,6 +158,10 @@ CRAYON.extends( 'InputConnector', Object, {
 		}
 	},
 
+	list: function() {
+		console.log( this.requirements );
+	},
+
 	getDependencies: function( visited ) {
 		// Depth first dependency checking.
 		// See http://en.wikipedia.org/wiki/Topological_sorting#Algorithms
@@ -172,6 +184,7 @@ CRAYON.extends( 'InputConnector', Object, {
 
 			if (!node) {
 
+				if (! (this.node instanceof CRAYON.ExecutorNode) )
 				console.warn(this.node.name + ' has missing Input Node ["' + name +  '"]');
 
 			} else {
@@ -216,14 +229,21 @@ CRAYON.extends( 'ExecutorNode', CRAYON.ShaderNode, {
 		if (!this.nodesToRender) {
 
 			this.nodesToRender = this.inputs.getDependencies();
-			console.log('Lists of nodes to render', this.nodesToRender);
+
+			console.log('Lists of nodes to render' );
+			// this.nodesToRender.forEach(function(a) {console.log(a.name)})
+			
 		}
 
 		var nodesToRender = this.nodesToRender;
 
-		for (var i=0; i<nodesToRender.length; i++) {
+		if (nodesToRender.length == 1) console.warn('ExecutorNode has nothing to execute');
 
+		for (var i=0; i<nodesToRender.length; i++) {
 			var node = nodesToRender[i];
+
+			// console.log(node.name);
+
 			node.render();
 
 		}
@@ -551,26 +571,6 @@ CRAYON.extends( 'FloatEncoderNode', CRAYON.PostProcessNode, {
 	}
 
 } );
-
-
-// CRAYON.extends( 'ParticleRendererNode', CRAYON.PostProcessNode, {
-
-// 	CRAYON.PostProcessNode.call( this, )
-
-// } );
-
-// CRAYON.extends('ParticleRendererNode', ShaderNode);
-
-// ParticleRendererNode.prototype.render = function() {
-
-// 	scene.overrideMaterial = material_depth;
-	
-// 	renderer.render( scene, camera, this.renderTarget );
-
-// 	scene.overrideMaterial = null;
-// }
-
-
 
 
 
