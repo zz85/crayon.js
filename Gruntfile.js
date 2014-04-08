@@ -7,8 +7,8 @@ module.exports = function(grunt) {
 				separator: ';'
 			},
 			dist: {
-				src: ['src/**/*.js'],
-				dest: 'dist/<%= pkg.alias %>.js'
+				src: ['src/core.js', 'src/**/*.js'],
+				dest: '<%= pkg.alias %>.js'
 			}
 		},
 		uglify: {
@@ -17,7 +17,7 @@ module.exports = function(grunt) {
 			},
 			dist: {
 				files: {
-					'dist/<%= pkg.alias %>.min.js': ['<%= concat.dist.dest %>']
+					'<%= pkg.alias %>.min.js': ['<%= concat.dist.dest %>']
 				}
 			}
 		},
