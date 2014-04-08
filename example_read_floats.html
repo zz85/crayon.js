@@ -13,38 +13,16 @@
 	</head>
 	<body>
 
+	<!--
+
+		This examples shows how the node system can be used to read
+		texture back to floats
+		
+	-->
+
 		<script src="three.min.js"></script>
 		<script src="ThreeUtils2.js"></script>
 
-
-		<!-- pass through vertex shader -->
-		<script id="vsPass" type="x-shader/x-vertex">
-
-			void main()	{
-
-				gl_Position = vec4( position, 1.0 );
-
-			}
-
-		</script>
-
-		<!-- pass through fragment shader -->
-		<script id="fsPass" type="x-shader/x-fragment">
-
-			uniform vec2 resolution;
-			uniform sampler2D texture;
-
-			void main()	{
-
-				vec2 uv = gl_FragCoord.xy / resolution.xy;
-
-				vec3 color = texture2D( texture, uv ).xyz;
-
-				gl_FragColor=vec4(color,1.0);
-
-			}
-
-		</script>
 		<!-- <script src="toon.js"></script> -->
 
 		<script id="fsGradientEncode" type="x-shader/x-fragment">

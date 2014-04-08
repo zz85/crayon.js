@@ -1,0 +1,26 @@
+{
+  "name": "crayon.js",
+  "alias": "crayon",
+  "version": "0.0.0",
+  "description": "Node-based Shader Library for Three.js",
+  "main": "Gruntfile.js",
+  "scripts": {
+    "test": ""
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/zz85/crayon.js.git"
+  },
+  "author": "Joshua Koo",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/zz85/crayon.js/issues"
+  },
+  "devDependencies": {
+        "grunt": "~0.4.4",
+        "grunt-contrib-concat": "~0.1.3",
+        "grunt-contrib-watch" : "~0.5.3",
+        "grunt-contrib-uglify": "~0.2.0",
+        "grunt-contrib-jshint": "*"
+    }
+}

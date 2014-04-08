@@ -1,33 +1,4 @@
-/*
- *  crayon.js
- *  @author zz85 / https://github.com/zz85
- *
- */
 
-window.CRAYON = {
-
-	extends: function( name, parent, props ) {
-
-		var klass = props.init;
-		klass.prototype = Object.create( parent.prototype );
-		klass.prototype.name = name;
-		klass.prototype.super = parent.prototype;
-
-
-		for ( var n in props ) {
-
-			if ( n != 'init') {
-				klass.prototype[ n ] = props[ n ];
-			}
-
-		}
-
-		this[ name ] = klass;
-	}
-};
-
-var width = innerWidth;
-var height = innerHeight;
 
 /*********************************************************************/
 
@@ -95,7 +66,7 @@ CRAYON.extends( 'PostProcessNode', CRAYON.ShaderNode, {
 
 	init: function ( renderer, material ) { // TODO parameters to be worked on
 
-		CRAYON.ShaderNode.call( this )
+		CRAYON.ShaderNode.call( this );
 
 		this.camera = new THREE.OrthographicCamera( -1, 1, 1, -1, 0, 10000 );
 
@@ -145,14 +116,14 @@ CRAYON.extends( 'InputConnector', Object, {
 			
 			if ( ! ( name in this.node.material.uniforms ) ) {
 				// Sanity check for target uniform, else warn
-				console.log('No uniform found' + name)
+				console.log('No uniform found' + name);
 			}
 
 			this.node.material.uniforms[name].value = from.renderTarget;
 
 		} else {
 			// Support for non-render nodes?
-			console.log('Not linking textures', from.name, name)
+			console.log('Not linking textures', from.name, name);
 
 			// 
 		}
@@ -455,7 +426,7 @@ CRAYON.extends( 'SceneDepthNode', CRAYON.ShaderNode, {
 		CRAYON.ShaderNode.call( this );
 
 		this.sceneNode = sceneNode;
-		this.inputs.requires('fake')
+		this.inputs.requires('fake');
 
 	},
 
@@ -486,7 +457,7 @@ CRAYON.extends( 'GradientEncoderNode', CRAYON.PostProcessNode, {
 		});
 
 		CRAYON.PostProcessNode.call( this, renderer, shaderMaterial );
-		this.inputs.requires('texture')
+		this.inputs.requires('texture');
 
 		var parameters = {
 			wrapS: THREE.RepeatWrapping,
@@ -510,7 +481,7 @@ CRAYON.extends( 'GradientEncoderNode', CRAYON.PostProcessNode, {
 	},
 
 	render: function() {
-		console.log('float!!!')
+		console.log('float!!!');
 		
 		this.renderer.render( this.scene, this.camera, this.encodedRenderTarget );
 		// renderer.render( this.scene, this.camera, this.renderTarget );
@@ -537,7 +508,7 @@ CRAYON.extends( 'FloatEncoderNode', CRAYON.PostProcessNode, {
 		});
 
 		CRAYON.PostProcessNode.call( this, renderer, shaderMaterial );
-		this.inputs.requires('texture')
+		this.inputs.requires('texture');
 
 		var parameters = {
 			wrapS: THREE.RepeatWrapping,
@@ -557,7 +528,7 @@ CRAYON.extends( 'FloatEncoderNode', CRAYON.PostProcessNode, {
 		this.pixels32 = new Float32Array(this.pixels.buffer);
 
 		this.renderTarget = previousNode.renderTarget;
-		this.renderTarget = this.encodedRenderTarget
+		this.renderTarget = this.encodedRenderTarget;
 
 	},
 
