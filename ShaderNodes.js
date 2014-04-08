@@ -269,8 +269,8 @@ CRAYON.extends( 'RenderToScreenNode', CRAYON.PostProcessNode, {
 				resolution: { type: 'v2', value: new THREE.Vector2(width, height) }
 			},
 			attributes:     {},
-			vertexShader:   getScriptShader('vsPass'),
-			fragmentShader: getScriptShader('fsPass')
+			vertexShader:   getShaderCode('pass-vs'),
+			fragmentShader: getShaderCode('pass-fs')
 		});
 
 		
@@ -481,8 +481,8 @@ CRAYON.extends( 'GradientEncoderNode', CRAYON.PostProcessNode, {
 				top: { type: 'f', value: top }
 			},
 			attributes:     {},
-			vertexShader:   getScriptShader('vsPass'),
-			fragmentShader: getScriptShader('fsGradientEncode')
+			vertexShader:   getShaderCode('pass-vs'),
+			fragmentShader: getShaderCode('fsGradientEncode')
 		});
 
 		CRAYON.PostProcessNode.call( this, renderer, shaderMaterial );
@@ -532,8 +532,8 @@ CRAYON.extends( 'FloatEncoderNode', CRAYON.PostProcessNode, {
 				resolution: { type: 'v2', value: new THREE.Vector2(width, height) }
 			},
 			attributes:     {},
-			vertexShader:   getScriptShader('vsPass'),
-			fragmentShader: getScriptShader('fsEncodeFloatX')
+			vertexShader:   getShaderCode('pass-vs'),
+			fragmentShader: getShaderCode('fsEncodeFloatX')
 		});
 
 		CRAYON.PostProcessNode.call( this, renderer, shaderMaterial );

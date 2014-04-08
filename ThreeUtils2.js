@@ -1,10 +1,54 @@
-function getScriptShader(id) {
-	return document.getElementById(id).innerText;
+/*
+ * Smart Shader Loader. Looks at 
+ *	1. Shaders in JS code form
+ *	2. Shaders in Script DOM Element
+ *	3. Shaders as separate files
+ *
+ *	Should build a tool to compile 3 -> 1 for release versions
+ */
+
+
+function getShaderCode( name ) {
+
+	if ( !window.CRAYON ) CRAYON = {};
+	if ( !CRAYON.Shaders ) CRAYON.Shaders = {};
+
+	if ( name in CRAYON.Shaders ) {
+
+		return CRAYON.Shaders[ name ];
+
+	}
+
+	var script = document.getElementById( name );
+
+	if ( script && script.textContent ) return script.textContent;
+
+	var request = new XMLHttpRequest();
+	request.open('GET', 'shaders/' + name + '.glsl', false);  // `false` makes the request synchronous
+	request.send(null);
+
+	if (request.status === 200) {
+
+		var code = request.responseText;
+
+		CRAYON.Shaders[ name ] = code; // Do simple caching
+
+		return code;
+
+	}
+
+	console.log('Failed to load shader [' + name + ']');
+
+}
+
+function dumpShaderCode() {
+
+	console.log( 'CRAYON.Shaders=' + JSON.stringify(CRAYON.Shaders) )
+
 }
 
 
-
-// GLSL Error Helper by https://gist.github.com/spite/ec45430b585089fe3ace
+// GLSL Error Helper by @thespite https://gist.github.com/spite/ec45430b585089fe3ace
 
 ( function() {
 

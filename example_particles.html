@@ -14,157 +14,12 @@
 	<body>
 
 		<script src="three.min.js"></script>
-		<script src="ThreeUtils2.js"></script>
+
 		<script src="stats.min.js"></script>
 
-
-		<!-- pass through vertex shader -->
-		<script id="vsPass" type="x-shader/x-vertex">
-
-			void main()	{
-
-				gl_Position = vec4( position, 1.0 );
-
-			}
-
-		</script>
-
-		<!-- pass through fragment shader -->
-		<script id="fsPass" type="x-shader/x-fragment">
-
-			uniform vec2 resolution;
-			uniform sampler2D texture;
-
-			void main()	{
-
-				vec2 uv = gl_FragCoord.xy / resolution.xy;
-
-				vec3 color = texture2D( texture, uv ).xyz;
-
-				gl_FragColor=vec4(color, 1.0);
-
-			}
-
-		</script>
 		<!-- <script src="toon.js"></script> -->
 
-		<script id="fsGradientEncode" type="x-shader/x-fragment">
-
-			uniform sampler2D texture;
-			uniform vec2 resolution;
-			uniform float top;
-
-
-			float shift_right(float v, float amt) {
-				v = floor(v) + 0.5;
-				return floor(v / exp2(amt));
-			}
-			float shift_left(float v, float amt) {
-				return floor(v * exp2(amt) + 0.5);
-			}
-			float mask_last(float v, float bits) {
-				return mod(v, shift_left(1.0, bits));
-			}
-			float extract_bits(float num, float from, float to) {
-				from = floor(from + 0.5);
-				to = floor(to + 0.5);
-				return mask_last(shift_right(num, from), to - from);
-			}
-			
-			vec4 encode_float(float val) {
-				if (val == 0.0)
-				return vec4(0, 0, 0, 0);
-				float sign = val > 0.0 ? 0.0 : 1.0;
-				val = abs(val);
-				float exponent = floor(log2(val));
-				float biased_exponent = exponent + 127.0;
-				float fraction = ((val / exp2(exponent)) - 1.0) * 8388608.0;
-				float t = biased_exponent / 2.0;
-				float last_bit_of_biased_exponent = fract(t) * 2.0;
-				float remaining_bits_of_biased_exponent = floor(t);
-				float byte4 = extract_bits(fraction, 0.0, 8.0) / 255.0;
-				float byte3 = extract_bits(fraction, 8.0, 16.0) / 255.0;
-				float byte2 = (last_bit_of_biased_exponent * 128.0 + extract_bits(fraction, 16.0, 23.0)) / 255.0;
-				float byte1 = (sign * 128.0 + remaining_bits_of_biased_exponent) / 255.0;
-				return vec4(byte4, byte3, byte2, byte1);
-			}
-
-			void main()	{
-				
-				vec2 uv = gl_FragCoord.xy / resolution.xy;
-
-				vec2 diff = vec2( 1. / resolution.x, 0.);
-				if (top == 1.0) diff = vec2( 0., 1. / resolution.y);
-
-				float val = texture2D( texture, uv + diff).x - texture2D( texture, uv - diff).x ;
-
-				gl_FragColor = encode_float(val);
-
-				// gl_FragColor = vec4(1.0);
-
-			}
-
-
-			
-		</script>
-
-		<script id="fsEncodeFloatX" type="x-shader/x-fragment">
-
-			uniform sampler2D texture;
-			uniform vec2 resolution;
-
-			float shift_right(float v, float amt) {
-				v = floor(v) + 0.5;
-				return floor(v / exp2(amt));
-			}
-			float shift_left(float v, float amt) {
-				return floor(v * exp2(amt) + 0.5);
-			}
-			float mask_last(float v, float bits) {
-				return mod(v, shift_left(1.0, bits));
-			}
-			float extract_bits(float num, float from, float to) {
-				from = floor(from + 0.5);
-				to = floor(to + 0.5);
-				return mask_last(shift_right(num, from), to - from);
-			}
-			
-			vec4 encode_float(float val) {
-				if (val == 0.0)
-				return vec4(0, 0, 0, 0);
-				float sign = val > 0.0 ? 0.0 : 1.0;
-				val = abs(val);
-				float exponent = floor(log2(val));
-				float biased_exponent = exponent + 127.0;
-				float fraction = ((val / exp2(exponent)) - 1.0) * 8388608.0;
-				float t = biased_exponent / 2.0;
-				float last_bit_of_biased_exponent = fract(t) * 2.0;
-				float remaining_bits_of_biased_exponent = floor(t);
-				float byte4 = extract_bits(fraction, 0.0, 8.0) / 255.0;
-				float byte3 = extract_bits(fraction, 8.0, 16.0) / 255.0;
-				float byte2 = (last_bit_of_biased_exponent * 128.0 + extract_bits(fraction, 16.0, 23.0)) / 255.0;
-				float byte1 = (sign * 128.0 + remaining_bits_of_biased_exponent) / 255.0;
-				return vec4(byte4, byte3, byte2, byte1);
-			}
-
-
-			void main()	{
-				
-				vec2 uv = gl_FragCoord.xy / resolution.xy;
-
-				float val = texture2D( texture, uv ).x;
-
-				gl_FragColor = encode_float(val);
-
-				// gl_FragColor = vec4(1.0);
-
-			}
-
-		</script>
-
-
-
-		<script type="x-shader/x-vertex" id="vsParticle">
+		<script type="x-shader/x-vertex" id="particle-brush-vs">
 
 			// uniform float amplitude;
 
@@ -173,6 +28,7 @@
 			uniform sampler2D color;
 
 			attribute float size;
+
 			// varying vec3 vColor;
 			varying float vEdge;
 			varying vec2 uv3;
@@ -204,7 +60,7 @@
 
 		</script>
 
-		<script type="x-shader/x-fragment" id="fsParticle">
+		<script type="x-shader/x-fragment" id="particle-brush-fs">
 
 			uniform sampler2D texture;
 			uniform sampler2D brush;
@@ -229,9 +85,11 @@
 
 		</script>
 
-
-
+		<script src="ThreeUtils2.js"></script>
 		<script src="ShaderNodes.js"></script>
+
+
+
 		<script>
 
 
@@ -267,11 +125,12 @@
 
 						uniforms: 		uniforms,
 						attributes:     attributes,
-						vertexShader:   document.getElementById( 'vsParticle' ).textContent,
-						fragmentShader: document.getElementById( 'fsParticle' ).textContent,
+						vertexShader:   document.getElementById( 'particle-brush-vs' ).textContent,
+						fragmentShader: document.getElementById( 'particle-brush-fs' ).textContent,
 
 						blending: 		THREE.AdditiveBlending,
 						depthTest: 		false,
+						depthWrite:     false,
 						transparent:	true
 
 					});
@@ -390,7 +249,7 @@
 
 
 						cube = new THREE.Mesh( geometry, material );
-						scene.add( cube );
+						// scene.add( cube );
 
 						// var geometry = new THREE.TorusKnotGeometry( 150 );
 						// for ( var i = 0, j = geometry.faces.length; i < j; i ++ ) {
@@ -411,7 +270,7 @@
 						sphere2 = new THREE.Mesh( new THREE.SphereGeometry( 100, 20, 10 ), material );
 						sphere2.position.set(200, 0, -40);
 
-						// scene.add( sphere );
+						scene.add( sphere );
 						// scene.add( sphere2 );
 
 
@@ -457,12 +316,8 @@
 				screenNode = new CRAYON.RenderToScreenNode( renderer );
 				edgeNode = new CRAYON.EdgeFilterNode( renderer );
 				multiplyNode = new CRAYON.MultiplyNode( renderer );
-				edgeFloatNode = new CRAYON.FloatEncoderNode( edgeNode );
 
 				executorNode = new CRAYON.ExecutorNode( renderer );
-
-				gradientX = new CRAYON.GradientEncoderNode( sceneDepthNode, 0 );
-				gradientY = new CRAYON.GradientEncoderNode( sceneDepthNode, 1 );
 
 				particleNode = new CRAYON.ParticleRendererNode( renderer );
 

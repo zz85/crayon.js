@@ -34,10 +34,11 @@ A complex code sample showcasing the API flexibility
 ##Q&A
 
 _Why Crayon?__
-* For managable post-processing rendering
+* Useful for prototyping shader systems
+* Each node encapsulates its own code, so its resuable
 * Each node have a renderTarget or an output
 * Makes it easy to rewire nodes without spaghetti code
-
+* For managable post-processing rendering
 
 _Why is this called Crayon?_
 
