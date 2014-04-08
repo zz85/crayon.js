@@ -175,6 +175,7 @@
 			attribute float size;
 			varying vec3 vColor;
 			varying float vEdge;
+			varying vec2 uv3;
 
 
 			void main() {
@@ -182,8 +183,9 @@
 				// vColor = vec3(1.0);
 
 				vec2 uv = vec2( (position.xy + 1.) / 2. ) ;
+				uv3 = uv;
 
-				vColor = texture2D( color, uv ).xyz;
+				// vColor = texture2D( color, uv ).xyz;
 				vEdge = texture2D( texture, uv ).x;
 
 				// modelViewMatrix *
@@ -205,16 +207,22 @@
 
 			uniform sampler2D texture;
 			uniform sampler2D brush;
+			uniform sampler2D color;
 
 			varying vec3 vColor;
 			varying float vEdge;
+			varying vec2 uv3;
 
 			void main() {
 
+
+
 				if (vEdge < 0.1 ) discard;
-				
+
+				vec3 c = texture2D( color, uv3 ).xyz;
+
 				// gl_FragColor = vec4( vColor.xyz, 1. );
-				gl_FragColor = vec4(texture2D( brush, gl_PointCoord ).xyz * vColor, 1.);;
+				gl_FragColor = vec4(texture2D( brush, gl_PointCoord ).xyz * c, 1.);;
 
 				// gl_FragColor = vec4( 1.0 * gl_PointCoord.x, .0, 0.0 , 1. );
 				// gl_FragColor =   vec4(texture2D( brush, gl_PointCoord ).xzy, 1.);;
@@ -467,12 +475,15 @@
 				// sceneNode.connect(sceneDepthNode, 'fake');
 				// sceneDepthNode.connect(edgeNode, 'texture');
 
-		
+				
+
+
 				sceneNode.connect(edgeNode, 'texture');
 				edgeNode.connect(particleNode, 'texture');
 				sceneNode.connect(particleNode, 'color');
 				particleNode.connect(screenNode, 'texture');
 				screenNode.connect(executorNode, 'texture');
+				
 
 
 				// window.addEventListener( 'resize', onWindowResize, false );
