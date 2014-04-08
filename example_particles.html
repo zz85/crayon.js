@@ -173,7 +173,7 @@
 			uniform sampler2D color;
 
 			attribute float size;
-			varying vec3 vColor;
+			// varying vec3 vColor;
 			varying float vEdge;
 			varying vec2 uv3;
 
@@ -185,7 +185,7 @@
 				vec2 uv = vec2( (position.xy + 1.) / 2. ) ;
 				uv3 = uv;
 
-				vColor = texture2D( color, uv ).xyz;
+				// vColor = texture2D( color, uv ).xyz;
 				vEdge = texture2D( texture, uv ).x;
 
 				// modelViewMatrix *
@@ -219,7 +219,8 @@
 				if (vEdge < 0.1 ) discard;
 
 				// gl_FragColor = vec4( vColor.xyz, 1. );
-				gl_FragColor = vec4(texture2D( brush, gl_PointCoord ).xyz * vColor, 0.2);;
+				gl_FragColor = vec4(texture2D( brush, gl_PointCoord ).xyz , vEdge * 0.4 + 0.2);;
+				// * vColor
 
 				// gl_FragColor = vec4( 1.0 * gl_PointCoord.x, .0, 0.0 , 1. );
 				// gl_FragColor =   vec4(texture2D( brush, gl_PointCoord ).xzy, 1.);;
@@ -250,7 +251,7 @@
 
 					};
 
-					var texture = THREE.ImageUtils.loadTexture( "textures/circle.png" );  // spark1.png
+					var texture = THREE.ImageUtils.loadTexture( "textures/snowflake7_alpha.png" );  // spark1.png circle
 
 					var uniforms = {
 
@@ -281,7 +282,7 @@
 
 					this.scene.remove( this.quad );
 
-					var particles = 300000; // 100000;
+					var particles = 500000; // 100000;
 					//
 
 					var geometry = new THREE.BufferGeometry();
@@ -292,22 +293,19 @@
 					var positions = geometry.attributes.position.array;
 					var size = geometry.attributes.size.array;
 
-					var n = 1, n2 = n / 2; // particles spread in the cube
-
 					for ( var i = 0; i < positions.length; i += 3 ) {
 
 						// positions
 
-						var x = Math.random() * n - n2;
-						var y = Math.random() * n - n2;
-						var z = Math.random() * n - n2;
+						var x = Math.random() * 2 - 1; // -1 .. +1
+						var y = Math.random() * 2 - 1;
 
-						positions[ i ]     = x * 2;
-						positions[ i + 1 ] = y * 2;
-						positions[ i + 2 ] = 0;
+						positions[ i ]     = x ;
+						positions[ i + 1 ] = y ;
+						positions[ i + 2 ] = 0 ;
 
 						// width / 500 
-						size[i] = 2 * (Math.random() * 2 + 8);
+						size[i] = .4 * (Math.random() * 4 + 8);
 
 					}
 
