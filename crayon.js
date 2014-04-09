@@ -137,6 +137,14 @@ CRAYON.extends( 'InputConnector', Object, {
 
 	link: function( from, name ) {
 
+		// TODO Make this cleaner
+
+		if (!name) {
+			if (this.requirements.length == 1) {
+				name = this.requirements[0];
+			}
+		}
+
 		this.connectedFrom[name] = from;
 
 		if ( this.node instanceof CRAYON.ExecutorNode ) {
@@ -567,17 +575,20 @@ CRAYON.extends( 'SceneDepthNode', CRAYON.ShaderNode, {
 		CRAYON.ShaderNode.call( this );
 
 		this.sceneNode = sceneNode;
-		this.inputs.requires('fake');
+		this.material_depth = new THREE.MeshDepthMaterial();
+		this.inputs.requires('texture');
 
 	},
 
 	render: function() {
 
-		scene.overrideMaterial = material_depth;
+		scene.overrideMaterial = this.material_depth;
 		
+		renderer.clear();
 		renderer.render( scene, camera, this.renderTarget );
 
 		scene.overrideMaterial = null;
+
 	}
 
 });

@@ -52,8 +52,8 @@
 				vEdge = texture2D( texture, uv ).x;
 
 				float t = time * 0.002;
-				// vec3 offset = vec3(0.); 
-				vec3 offset = vec3(sin(t + uv.y * 64.132), cos(t + uv.x * 63. ), 0.) / 198.;
+				vec3 offset = vec3(0.); 
+				// vec3 offset = vec3(sin(t + uv.y * 64.132), cos(t + uv.x * 63. ), 0.) / 198.;
 				// vec3(rand(uv.yx * 10. + t), rand(uv.xy + t), 0.) / 20.;
 				
 
@@ -86,12 +86,7 @@
 
 				if (vEdge < 0.1 ) discard;
 
-				// gl_FragColor = vec4( vColor.xyz, 1. );
 				gl_FragColor = vec4(texture2D( brush, gl_PointCoord ).xyz , vEdge * 0.4 + 0.5);;
-				// * vColor
-
-				// gl_FragColor = vec4( 1.0 * gl_PointCoord.x, .0, 0.0 , 1. );
-				// gl_FragColor =   vec4(texture2D( brush, gl_PointCoord ).xzy, 1.);;
 
 			}
 
@@ -145,18 +140,6 @@
 
 						var geometry = new THREE.CubeGeometry( 200, 200, 200 );
 
-						material_depth = new THREE.MeshDepthMaterial();
-						
-
-						function phongMaterial(ambient, diffuse, shiny, power) {
-							return new THREE.MeshPhongMaterial({
-								emissive : ambient,
-								color    : diffuse,
-								specular : shiny,
-								shininess: power
-							});
-						}
-
 						function directionalLight(x, y, z, color) {
 							var light = new THREE.DirectionalLight(color);
 							light.position.set(x,y,z).normalize();
@@ -168,33 +151,25 @@
 							// shading: THREE.FlatShading
 						} );
 
-
-						// material = phongMaterial(0x333333, 0xfa9204, 0xffffff, 30)
-						// scene.add(new THREE.AmbientLight(0x333333));
+						scene.add(new THREE.AmbientLight(0x333333));
 						scene.add(directionalLight(.2,0,1, 0xffffff));
 
 
 						cube = new THREE.Mesh( geometry, material );
+						cube.position.y = -150;
 						scene.add( cube );
 
 	
-						sphere = new THREE.Mesh( new THREE.SphereGeometry( 200, 20, 10 ), material );
-						sphere.position.z = -200;
-
-						sphere2 = new THREE.Mesh( new THREE.SphereGeometry( 100, 20, 10 ), material );
-						sphere2.position.set(200, 0, -40);
+						sphere = new THREE.Mesh( new THREE.SphereGeometry( 100, 20, 10 ), material );
 
 						scene.add( sphere );
-						// scene.add( sphere2 );
-
-
 
 						var material = new THREE.MeshBasicMaterial( { color: 0xe0e0e0 } );
 
 						var geometry = new THREE.PlaneGeometry( 600, 600 );
 
 						plane = new THREE.Mesh( geometry, material );
-						plane.position.y = - 200;
+						plane.position.y = - 250;
 						plane.rotation.x = - Math.PI / 2;
 						scene.add( plane );
 
@@ -212,14 +187,6 @@
 						sphere.position.y = Math.abs( Math.sin( timer * 0.002 ) ) * 150;
 						sphere.rotation.x = timer * 0.0003;
 						sphere.rotation.z = timer * 0.0002;
-
-						sphere2.position.y = Math.abs( Math.sin( timer * 0.004 ) ) * 100;
-						sphere2.rotation.x = timer * 0.0013;
-						sphere2.rotation.z = timer * 0.0002;
-
-
-						// mesh.rotation.x += 0.005;
-						// mesh.rotation.y += 0.01;
 
 						renderer.render( scene, camera, this.renderTarget );
 					}
