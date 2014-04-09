@@ -171,17 +171,20 @@ CRAYON.extends( 'SceneDepthNode', CRAYON.ShaderNode, {
 		CRAYON.ShaderNode.call( this );
 
 		this.sceneNode = sceneNode;
-		this.inputs.requires('fake');
+		this.material_depth = new THREE.MeshDepthMaterial();
+		this.inputs.requires('texture');
 
 	},
 
 	render: function() {
 
-		scene.overrideMaterial = material_depth;
+		scene.overrideMaterial = this.material_depth;
 		
+		renderer.clear();
 		renderer.render( scene, camera, this.renderTarget );
 
 		scene.overrideMaterial = null;
+
 	}
 
 });

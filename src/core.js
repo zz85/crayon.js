@@ -137,6 +137,14 @@ CRAYON.extends( 'InputConnector', Object, {
 
 	link: function( from, name ) {
 
+		// TODO Make this cleaner
+
+		if (!name) {
+			if (this.requirements.length == 1) {
+				name = this.requirements[0];
+			}
+		}
+
 		this.connectedFrom[name] = from;
 
 		if ( this.node instanceof CRAYON.ExecutorNode ) {
