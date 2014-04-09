@@ -177,6 +177,30 @@ CRAYON.extends( 'InputConnector', Object, {
 
 		}
 
+		if ( this.node instanceof CRAYON.ExecutorNode ) { // wildcard
+			console.log('fdfd');
+
+			for (name in this.connectedFrom) {
+
+				node = this.connectedFrom[name];
+
+				if (!node) {
+
+					if (! (this.node instanceof CRAYON.ExecutorNode) )
+					console.warn(this.node.name + ' has missing Input Node ["' + name +  '"]');
+
+				} else {
+
+					if ( visited.indexOf( node ) == -1 ) {
+
+						node.inputs.getDependencies( visited );
+
+					}
+				}
+			}
+
+		} else
+
 		for ( var i=0; i < names.length; i++ ) {
 
 			name = names[i];
@@ -214,7 +238,8 @@ CRAYON.extends( 'ExecutorNode', CRAYON.ShaderNode, {
 	init: function ( renderer ) {
 
 		CRAYON.ShaderNode.call( this, renderer );
-		this.inputs.requires('texture', 'gradientX', 'gradientY', 'edge');
+		this.inputs.requires('texture');
+		// , 'gradientX', 'gradientY', 'edge'
 
 	},
 
@@ -231,7 +256,7 @@ CRAYON.extends( 'ExecutorNode', CRAYON.ShaderNode, {
 			this.nodesToRender = this.inputs.getDependencies();
 
 			console.log('Lists of nodes to render' );
-			// this.nodesToRender.forEach(function(a) {console.log(a.name)})
+			this.nodesToRender.forEach(function(a) {console.log(a.name);});
 			
 		}
 
@@ -260,12 +285,6 @@ CRAYON.extends( 'RenderToScreenNode', CRAYON.PostProcessNode, {
 		var shaderMaterial = new THREE.ShaderMaterial( {
 			uniforms: 		{
 				texture: { type: 't', value: null },
-
-				// Fakes
-				edge: { type: 't', value: null },
-				gradientY: { type: 't', value: null },
-				gradientX: { type: 't', value: null },
-
 				resolution: { type: 'v2', value: new THREE.Vector2(width, height) }
 			},
 			attributes:     {},

@@ -118,7 +118,7 @@
 				executorNode = new CRAYON.ExecutorNode( renderer );
 
 				
-				sceneNode.connect(sceneDepthNode, 'fake');
+				sceneNode.connect(sceneDepthNode, 'texture');
 				sceneDepthNode.connect(edgeNode, 'texture');
 
 				edgeNode.connect(multiplyNode, 'texture1')

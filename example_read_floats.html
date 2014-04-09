@@ -280,7 +280,7 @@
 				gradientY = new CRAYON.GradientEncoderNode( sceneDepthNode, 1 );
 
 				
-				sceneNode.connect(sceneDepthNode, 'fake');
+				sceneNode.connect(sceneDepthNode, 'texture');
 				sceneDepthNode.connect(edgeNode, 'texture')
 				sceneDepthNode.connect(gradientX, 'texture')
 				sceneDepthNode.connect(gradientY, 'texture')

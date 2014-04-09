@@ -13,13 +13,14 @@ CRAYON.extends( 'ParticleRendererNode', CRAYON.PostProcessNode, {
 
 		var uniforms = {
 
-			amplitude: { type: "f", value: 1.0 },
+			time: { type: "f", value: 1.0 },
 			brush:   { type: "t", value: texture },
 			texture:   { type: "t", value: null },
 			color:   { type: "t", value: null },
 
 		};
 
+		this.uniforms = uniforms;
 
 		var material = new THREE.ShaderMaterial( {
 
@@ -76,6 +77,15 @@ CRAYON.extends( 'ParticleRendererNode', CRAYON.PostProcessNode, {
 		this.scene.add( particleSystem );
 
 		this.inputs.requires('texture');
+	},
+
+	render: function() {
+
+		this.uniforms.time.value = performance.now();
+
+		CRAYON.PostProcessNode.prototype.render.call( this );
+
+
 	}
 
 } );
