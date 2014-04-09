@@ -47,8 +47,8 @@ CRAYON.extends( 'ParticleRendererNode', CRAYON.PostProcessNode, {
 
 		var geometry = new THREE.BufferGeometry();
 
-		geometry.addAttribute( 'position', Float32Array, PARTICLES, 3 );
-		geometry.addAttribute( 'size', Float32Array, PARTICLES, 1 );
+		geometry.addAttribute( 'position', new THREE.Float32Attribute( PARTICLES, 3 ) );
+		geometry.addAttribute( 'size', new THREE.Float32Attribute( PARTICLES, 1 ) );
 
 		var positions = geometry.attributes.position.array;
 		var size = geometry.attributes.size.array;
