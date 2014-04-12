@@ -22,115 +22,57 @@
 
 		<!--
 
-			This examples demostrates a "particle brush" technique for NPR.
-
-			A buffer geometry is used for particles, and particles read scene 
-			information from textures to render, giving a handdrawn / sketching / chalkboard feeling.
-
+			This examples test blur filter optimizations
 		-->
 
-		<script type="x-shader/x-vertex" id="particle-brush-vs">
-
-			uniform float time;
-
-			uniform sampler2D texture;
-			uniform sampler2D brush;
-			uniform sampler2D color;
-
-			attribute float size;
-
-			// varying vec3 vColor;
-			varying float vEdge;
-
-			float rand(vec2 co){
-				return fract(sin(dot(co.xy ,vec2(12.9898,78.233))) * 43758.5453123);
-			}
-
-			void main() {
-
-				vec2 uv = vec2( (position.xy + 1.) / 2. ) ;
-				// vColor = texture2D( color, uv ).xyz;
-				vEdge = texture2D( texture, uv ).x;
-
-				float t = time * 0.002;
-				// vec3 offset = vec3(0.); 
-				vec3 offset = vec3(0.);
-				// vec3(sin(t + uv.y * 64.132), cos(t + uv.x * 63. ), 0.) / 198.;
-				// vec3(rand(uv.yx * 10. + t), rand(uv.xy + t), 0.) / 20.;
-				
-
-				// modelViewMatrix *
-				vec4 mvPosition = vec4( position + offset, 1.0 );
-
-				gl_PointSize = size;
-
-				if (vEdge < 0.1) gl_PointSize = 0.; // Optimization Trick for faster FPS
-
-				// gl_PointSize = 10.0;
-				// Screen space point
-
-				gl_Position = projectionMatrix * mvPosition;
-
-			}
-
-		</script>
-
-		<script type="x-shader/x-fragment" id="particle-brush-fs">
-
-			uniform sampler2D texture;
-			uniform sampler2D brush;
-			uniform sampler2D color;
-
-			varying vec3 vColor;
-			varying float vEdge;
-
-			void main() {
-
-				if (vEdge < 0.1 ) discard;
-
-				// gl_FragColor = vec4( vColor.xyz, 1. );
-				gl_FragColor = vec4(texture2D( brush, gl_PointCoord ).xyz , vEdge * 0.4 + 0.5);;
-				// * vColor
-
-				// gl_FragColor = vec4( 1.0 * gl_PointCoord.x, .0, 0.0 , 1. );
-				// gl_FragColor =   vec4(texture2D( brush, gl_PointCoord ).xzy, 1.);;
-
-			}
-
-		</script>
+	
 
 		<script src="ThreeUtils2.js"></script>
 		<script src="crayon.js"></script>
 
 		<script>
+
 		/**
 		 * @author zz85 / http://www.lab4games.net/zz85/blog
 		 *
-		 * Two pass Gaussian blur filter (horizontal and vertical blur shaders)
-		 * - described in http://www.gamerendering.com/2008/10/11/gaussian-blur-filter-shader/
-		 *   and used in http://www.cake23.de/traveling-wavefronts-lit-up.html
-		 *
-		 * - 9 samples per pass
-		 * - standard deviation 2.7
+		 * Two pass Gaussian blur filter (Run a vertical then horizontal blur passes)
+		 * - Related: http://www.gamerendering.com/2008/10/11/gaussian-blur-filter-shader/
 		 * - "h" and "v" parameters should be set to "1 / width" and "1 / height"
+		 *
+		 * Uses optimizations from
+	  	 * http://rastergrid.com/blog/2010/09/efficient-gaussian-blur-with-linear-sampling/
+		 * http://www.sunsetlakesoftware.com/2013/10/21/optimizing-gaussian-blurs-mobile-gpu
+		 * http://xissburg.com/faster-gaussian-blur-in-glsl/
+		 * https://github.com/manuelbua/blur-ninja
 		 */
 
-		THREE.VerticalBlurShader = {
+		THREE.BlurShader = {
 
 			uniforms: {
 
 				"tDiffuse": { type: "t", value: null },
+				"h":        { type: "f", value: 1.0 / 512.0 },
 				"v":        { type: "f", value: 1.0 / 512.0 }
 
 			},
 
 			vertexShader: [
 
-				"varying vec2 vUv;",
+				"uniform float h;",
+				"uniform float v;",
+				"varying vec2 vBlurCoords[5];",
 
 				"void main() {",
 
-					"vUv = uv;",
+					// "vUv = uv;",
+					"vec2 uv3 = uv;",
+					"vec2 offset = vec2(h, v);",
+					"vBlurCoords[0] = uv3 + offset * -3.2307692308;",
+					"vBlurCoords[1] = uv3 + offset * -1.3846153846;",
+					"vBlurCoords[2] = uv3 ;",
+					"vBlurCoords[3] = uv3 + offset * 1.3846153846;",
+					"vBlurCoords[4] = uv3 + offset * 3.2307692308;",
+
 					"gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );",
 
 				"}"
@@ -140,23 +82,18 @@
 			fragmentShader: [
 
 				"uniform sampler2D tDiffuse;",
-				"uniform float v;",
-
-				"varying vec2 vUv;",
+				
+				"varying vec2 vBlurCoords[5];",
 
 				"void main() {",
 
 					"vec4 sum = vec4( 0.0 );",
 
-					"sum += texture2D( tDiffuse, vec2( vUv.x, vUv.y - 4.0 * v ) ) * 0.051;",
-					"sum += texture2D( tDiffuse, vec2( vUv.x, vUv.y - 3.0 * v ) ) * 0.0918;",
-					"sum += texture2D( tDiffuse, vec2( vUv.x, vUv.y - 2.0 * v ) ) * 0.12245;",
-					"sum += texture2D( tDiffuse, vec2( vUv.x, vUv.y - 1.0 * v ) ) * 0.1531;",
-					"sum += texture2D( tDiffuse, vec2( vUv.x, vUv.y ) ) * 0.1633;",
-					"sum += texture2D( tDiffuse, vec2( vUv.x, vUv.y + 1.0 * v ) ) * 0.1531;",
-					"sum += texture2D( tDiffuse, vec2( vUv.x, vUv.y + 2.0 * v ) ) * 0.12245;",
-					"sum += texture2D( tDiffuse, vec2( vUv.x, vUv.y + 3.0 * v ) ) * 0.0918;",
-					"sum += texture2D( tDiffuse, vec2( vUv.x, vUv.y + 4.0 * v ) ) * 0.051;",
+					"sum += texture2D( tDiffuse, vBlurCoords[0] ) * 0.0702702703;",
+					"sum += texture2D( tDiffuse, vBlurCoords[1] ) * 0.3162162162;",
+					"sum += texture2D( tDiffuse, vBlurCoords[2] ) * 0.227027027;",
+					"sum += texture2D( tDiffuse, vBlurCoords[3] ) * 0.3162162162;",
+					"sum += texture2D( tDiffuse, vBlurCoords[4] ) * 0.0702702703;",
 
 					"gl_FragColor = sum;",
 
@@ -166,146 +103,66 @@
 
 		};
 
-		THREE.HorizontalBlurShader = {
+		CRAYON.extends( 'BlurNode', CRAYON.PostProcessNode, {
 
-			uniforms: {
+			init: function() {
 
-				"tDiffuse": { type: "t", value: null },
-				"h":        { type: "f", value: 1.0 / 512.0 }
+
+				var shader = THREE.BlurShader;
+				shader.uniforms = THREE.UniformsUtils.clone( shader.uniforms );
+				var vShaderMaterial = new THREE.ShaderMaterial( shader );
+
+				shader = THREE.BlurShader;
+				shader.uniforms = THREE.UniformsUtils.clone( shader.uniforms );
+				var hShaderMaterial = new THREE.ShaderMaterial( shader );
+
+				CRAYON.PostProcessNode.call( this, renderer, vShaderMaterial );
+				
+
+				var resize = 1; // Down sample factor
+
+				this.repeats = 1;
+
+
+				var w = width / resize;
+				var h = height / resize;
+
+				this.renderTarget.width = w;
+				this.renderTarget.height = h;
+				this.renderTarget2 = this.renderTarget.clone();
+
+				vShaderMaterial.uniforms.v.value =  1 / h;
+				vShaderMaterial.uniforms.h.value =  0;
+
+				hShaderMaterial.uniforms.v.value =  0;
+				hShaderMaterial.uniforms.h.value =  1 / w;
+
+				this.vShaderMaterial = vShaderMaterial;
+				this.hShaderMaterial = hShaderMaterial
+
+				hShaderMaterial.uniforms.tDiffuse.value = this.renderTarget2;
+
+				// this.quad.material = material;
+
+				this.inputs.requires('tDiffuse');
+
+				
 
 			},
 
-			vertexShader: [
+			render: function() {
 
-				"varying vec2 vUv;",
+				var inRT = this.material.uniforms['tDiffuse'].value;
 
-				"void main() {",
-
-					"vUv = uv;",
-					"gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );",
-
-				"}"
-
-			].join("\n"),
-
-			fragmentShader: [
-
-				"uniform sampler2D tDiffuse;",
-				"uniform float h;",
-
-				"varying vec2 vUv;",
-
-				"void main() {",
-
-					"vec4 sum = vec4( 0.0 );",
-
-					"sum += texture2D( tDiffuse, vec2( vUv.x - 4.0 * h, vUv.y ) ) * 0.051;",
-					"sum += texture2D( tDiffuse, vec2( vUv.x - 3.0 * h, vUv.y ) ) * 0.0918;",
-					"sum += texture2D( tDiffuse, vec2( vUv.x - 2.0 * h, vUv.y ) ) * 0.12245;",
-					"sum += texture2D( tDiffuse, vec2( vUv.x - 1.0 * h, vUv.y ) ) * 0.1531;",
-					"sum += texture2D( tDiffuse, vec2( vUv.x, vUv.y ) ) * 0.1633;",
-					"sum += texture2D( tDiffuse, vec2( vUv.x + 1.0 * h, vUv.y ) ) * 0.1531;",
-					"sum += texture2D( tDiffuse, vec2( vUv.x + 2.0 * h, vUv.y ) ) * 0.12245;",
-					"sum += texture2D( tDiffuse, vec2( vUv.x + 3.0 * h, vUv.y ) ) * 0.0918;",
-					"sum += texture2D( tDiffuse, vec2( vUv.x + 4.0 * h, vUv.y ) ) * 0.051;",
-
-					"gl_FragColor = sum;",
-
-				"}"
-
-			].join("\n")
-
-		};
-
-
-
-		CRAYON.extends( 'ArtNode', CRAYON.PostProcessNode, {
-
-			init: function() {
-
-
-				var options = {
-					uniforms: {
-
-						"tDiffuse": { type: "t", value: null },
-						"resolution": { type: "v2", value: new THREE.Vector2() }
-
-					},
-
-					vertexShader: [
-
-				"varying vec2 vUv;",
-
-				"void main() {",
-
-					"vUv = uv;",
-					"gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );",
-
-				"}"
-
-			].join("\n"),
-					fragmentShader: getShaderCode('art-fs')
-
+				for (var i = 0; i < this.repeats; i++) {
+					this.quad.material = this.vShaderMaterial;
+					this.renderer.render( this.scene, this.camera, this.renderTarget2 );
+					this.quad.material = this.hShaderMaterial;
+					this.renderer.render( this.scene, this.camera, this.renderTarget );
+					this.vShaderMaterial.uniforms.tDiffuse.value = this.renderTarget;
 				}
 
-				var shaderMaterial = new THREE.ShaderMaterial( options );
-				shaderMaterial.uniforms.resolution.value.set( width, height );
-
-				CRAYON.PostProcessNode.call( this, renderer, shaderMaterial );
-				this.inputs.requires('tDiffuse');
-
-			}
-
-		} );
-
-		// * 2 or 3 is pretty good.
-
-		CRAYON.extends( 'VBlurNode', CRAYON.PostProcessNode, {
-
-			init: function() {
-
-				var shaderMaterial = new THREE.ShaderMaterial( THREE.VerticalBlurShader );
-				CRAYON.PostProcessNode.call( this, renderer, shaderMaterial );
-
-				var resize = 3; // Down sample factor
-
-				var w = width / resize;
-				var h = height / resize;
-
-				this.renderTarget.width = w;
-				this.renderTarget.height = h;
-
-
-				shaderMaterial.uniforms.v.value = 1 / h;
-
-				this.inputs.requires('tDiffuse');
-
-			}
-
-		} );
-
-		CRAYON.extends( 'HBlurNode', CRAYON.PostProcessNode, {
-
-			init: function() {
-
-				var shaderMaterial = new THREE.ShaderMaterial( THREE.HorizontalBlurShader );
-
-				CRAYON.PostProcessNode.call( this, renderer, shaderMaterial );
-				
-
-				var resize = 3; // Down sample factor
-
-				var w = width / resize;
-				var h = height / resize;
-
-				this.renderTarget.width = w;
-				this.renderTarget.height = h;
-
-
-				shaderMaterial.uniforms.h.value =  1 / w;
-
-
-				this.inputs.requires('tDiffuse');
+				this.material.uniforms['tDiffuse'].value = inRT;
 
 			}
 
@@ -435,20 +292,6 @@
 						if (meshAnim)
 						meshAnim.updateAnimation( delta );
 
-						// cube.rotation.y = timer * 0.0005;
-
-						// sphere.position.y = Math.abs( Math.sin( timer * 0.002 ) ) * 150;
-						// sphere.rotation.x = timer * 0.0003;
-						// sphere.rotation.z = timer * 0.0002;
-
-						// sphere2.position.y = Math.abs( Math.sin( timer * 0.004 ) ) * 100;
-						// sphere2.rotation.x = timer * 0.0013;
-						// sphere2.rotation.z = timer * 0.0002;
-
-
-						// mesh.rotation.x += 0.005;
-						// mesh.rotation.y += 0.01;
-
 						renderer.clear();
 						renderer.render( scene, camera, this.renderTarget );
 					}
@@ -461,61 +304,13 @@
 				sceneNode = new CRAYON.SceneNode();
 				sceneDepthNode = new CRAYON.SceneDepthNode( sceneNode );
 				screenNode = new CRAYON.RenderToScreenNode( renderer );
-				edgeNode = new CRAYON.EdgeFilterNode( renderer );
-				multiplyNode = new CRAYON.MultiplyNode( renderer );
 
 				executorNode = new CRAYON.ExecutorNode( renderer );
 
-				particleNode = new CRAYON.ParticleRendererNode( renderer );
+				blurNode = new CRAYON.BlurNode( renderer );
 
-				artNode = new CRAYON.ArtNode( renderer );
-				vBlurNode = new CRAYON.VBlurNode( renderer );
-				hBlurNode = new CRAYON.HBlurNode( renderer );
-
-				vBlurNode2 = new CRAYON.VBlurNode( renderer );
-				hBlurNode2 = new CRAYON.HBlurNode( renderer );
-
-				/*
-				sceneNode.connect(edgeNode, 'texture');
-
-				// sceneNode.connect(sceneDepthNode, 'fake');
-				// sceneDepthNode.connect(edgeNode, 'texture');
-
-				edgeNode.connect(particleNode, 'texture');
-				sceneNode.connect(particleNode, 'color');
-				particleNode.connect(screenNode, 'texture');
-				screenNode.connect(executorNode, 'texture');
-				*/
-
-				/**/
-				// Debug Depth
-				// sceneNode.connect(sceneDepthNode, 'texture');
-				// sceneDepthNode.connect(screenNode, 'texture');
-				// screenNode.connect(executorNode, 'texture');
-
-				/*
-				// Debug SCene
-				sceneNode.connect(screenNode, 'texture');
-				screenNode.connect(executorNode, 'texture');
-				*/
-
-				sceneNode.connect(artNode, 'tDiffuse');
-
-				sceneNode.connect(edgeNode, 'texture');
-				edgeNode.connect(multiplyNode,'texture2');
-
-
-				artNode.connect(vBlurNode, 'tDiffuse');
-
-				vBlurNode.connect(hBlurNode, 'tDiffuse');
-				hBlurNode.connect(multiplyNode, 'texture1');
-
-				// vBlurNode2.connect(hBlurNode2, 'tDiffuse');
-				// hBlurNode2.connect(screenNode, 'texture');
-
-				multiplyNode.connect(screenNode, 'texture');
-
-
+				sceneNode.connect(blurNode, 'tDiffuse');
+				blurNode.connect(screenNode, 'texture');
 				screenNode.connect(executorNode, 'texture');
 
 
