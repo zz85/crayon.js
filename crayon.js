@@ -99,8 +99,6 @@ CRAYON.extends( 'PostProcessNode', CRAYON.ShaderNode, {
 
 		this.camera = new THREE.OrthographicCamera( -1, 1, 1, -1, 0, 10000 );
 
-
-
 		this.quad = new THREE.Mesh( new THREE.PlaneGeometry( 2, 2 ), null );
 		this.scene = new THREE.Scene();
 		this.scene.add( this.quad );
@@ -157,6 +155,8 @@ CRAYON.extends( 'InputConnector', Object, {
 			}
 
 			this.node.material.uniforms[name].value = from.renderTarget;
+			// this.node.incomingRT
+
 
 		} else {
 			// Support for non-render nodes?
@@ -546,8 +546,10 @@ THREE.MultiplyNode = {
 			"vec3 c2 = texture2D( texture2, vUv ).rgb;",
 			
 
-			"gl_FragColor = vec4((1. - (1. - c1) * (1. - c2)), 1.0);",
+			// "gl_FragColor = vec4((1. - (1. - c1) * (1. - c2)), 1.0);",
 			// "gl_FragColor = vec4(c1 * c2, 1.0);",
+
+			"gl_FragColor = vec4(c1 * (1.-c2), 1.0);",
 		"} ",
 
 	].join("\n")
@@ -574,8 +576,17 @@ CRAYON.extends( 'SceneDepthNode', CRAYON.ShaderNode, {
 	init: function( sceneNode ) {
 		CRAYON.ShaderNode.call( this );
 
-		this.sceneNode = sceneNode;
-		this.material_depth = new THREE.MeshDepthMaterial();
+		// this.sceneNode = sceneNode;
+		// this.material_depth = new THREE.MeshDepthMaterial({
+		// 	morphTargets: true
+		// });
+
+
+		// var depthShader = THREE.ShaderLib.depthRGBA;
+		// var depthUniforms = THREE.UniformsUtils.clone( depthShader.uniforms );
+
+		// this.material_depth = new THREE.ShaderMaterial( { fragmentShader: depthShader.fragmentShader, vertexShader: depthShader.vertexShader, uniforms: depthUniforms, morphTargets: true } );
+
 		this.inputs.requires('texture');
 
 	},

@@ -99,8 +99,6 @@ CRAYON.extends( 'PostProcessNode', CRAYON.ShaderNode, {
 
 		this.camera = new THREE.OrthographicCamera( -1, 1, 1, -1, 0, 10000 );
 
-
-
 		this.quad = new THREE.Mesh( new THREE.PlaneGeometry( 2, 2 ), null );
 		this.scene = new THREE.Scene();
 		this.scene.add( this.quad );
@@ -157,6 +155,8 @@ CRAYON.extends( 'InputConnector', Object, {
 			}
 
 			this.node.material.uniforms[name].value = from.renderTarget;
+			// this.node.incomingRT
+
 
 		} else {
 			// Support for non-render nodes?
