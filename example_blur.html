@@ -127,7 +127,7 @@
 
 		function generateShaders(taps) {
 
-			taps = taps || 13;
+			taps = taps || 9;
 
 			var coefficients = calc(taps);
 			var linear_weights = coefficients.linear_weights;
@@ -224,11 +224,12 @@
 				return;
 			}
 
-			var edgesToRemove = 2;
+			// Remove edges with too little weight.
+			var edgesToRemove = 0;
 
 			var binom = binomial( level );
 
-			console.log('Initial gaussian distribution', binom);
+			// console.log('Initial gaussian distribution', binom);
 
 			var total = 0;
 			for (var i = 0; i < binom.length; i++) {
@@ -244,10 +245,12 @@
 				offsets.push( Math.abs(i + 1 - off));
 			}
 
-			console.log('discrete weights', weights);
-			console.log('discrete offsets', offsets);
+			// console.log('discrete weights', weights);
+			// console.log('discrete offsets', offsets);
 
-			// Remove edges with too little weight.
+			
+			/*
+			// Edge removal requires more work with
 			var weight = 1;
 
 			while (edgesToRemove--) {
@@ -258,6 +261,7 @@
 			for (i = 0; i < weights.length; i++) {
 				weight[ i ] /= weight;
 			}
+			*/
 
 			// Calculate linear sampling weights
 			var linear_weights = [ weights[0] ];
@@ -270,8 +274,8 @@
 
 			}
 
-			console.log('linear weights', linear_weights);
-			console.log('linear offsets', linear_offsets);
+			// console.log('linear weights', linear_weights);
+			// console.log('linear offsets', linear_offsets);
 
 			return {
 				weights: weights,
@@ -313,20 +317,20 @@
 
 			init: function() {
 
-				var shader = generateShaders();
+				var shader = generateShaders(9); // 13 17
 				shader.uniforms = THREE.UniformsUtils.clone( THREE.BlurShader.uniforms );
 				var vShaderMaterial = new THREE.ShaderMaterial( shader );
 
-				var shader = generateShaders();
+				var shader = generateShaders(9);
 				shader.uniforms = THREE.UniformsUtils.clone( THREE.BlurShader.uniforms );
 				var hShaderMaterial = new THREE.ShaderMaterial( shader );
 
 				CRAYON.PostProcessNode.call( this, renderer, vShaderMaterial );
 				
 
-				var resize = 1; // Down sample factor
+				var resize = 3; // Down sample factor
 
-				this.repeats = 1;
+				this.repeats = 3;
 
 
 				var w = width / resize;
