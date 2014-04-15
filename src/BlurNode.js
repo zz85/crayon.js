@@ -96,8 +96,8 @@ function generateShaders(taps) {
 	vertexShader = vertexShader.replace(/%d/, n).replace(/%s/, coords.join('\n'));
 	fragmentShader = fragmentShader.replace(/%d/, n).replace(/%s/, textures.join('\n'));
 
-	console.log(vertexShader);
-	console.log(fragmentShader);
+	// console.log(vertexShader);
+	// console.log(fragmentShader);
 
 	return {
 		vertexShader: vertexShader,
@@ -248,9 +248,6 @@ CRAYON.extends( 'BlurNode', CRAYON.PostProcessNode, {
 		// this.quad.material = material;
 
 		this.inputs.requires('tDiffuse');
-
-		console.log(this);
-
 	},
 
 	render: function() {

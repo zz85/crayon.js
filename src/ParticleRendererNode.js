@@ -1,6 +1,6 @@
 CRAYON.extends( 'ParticleRendererNode', CRAYON.PostProcessNode, {
 
-	init: function( renderer ) {
+	init: function( renderer, textureUrl ) {
 		
 
 		var attributes = {
@@ -9,7 +9,8 @@ CRAYON.extends( 'ParticleRendererNode', CRAYON.PostProcessNode, {
 
 		};
 
-		var texture = THREE.ImageUtils.loadTexture( "textures/circle.png" );  // spark1.png circle.png snowflake7_alpha.png
+		textureUrl = textureUrl || "textures/circle.png";
+		var texture = THREE.ImageUtils.loadTexture( textureUrl );
 
 		var uniforms = {
 
@@ -64,8 +65,8 @@ CRAYON.extends( 'ParticleRendererNode', CRAYON.PostProcessNode, {
 			positions[ i + 1 ] = y ;
 			positions[ i + 2 ] = 0 ;
 
-			// width / 500 
-			size[i] = 0.4 * (Math.random() * 4 + 8);
+			//
+			size[i] =  width / 1000 * (Math.random() * 2 + 2);
 
 		}
 

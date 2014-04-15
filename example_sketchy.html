@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>crayon.js - Loose and Sketchy</title>
+		<meta charset="utf-8">
+		<style>
+			body {
+				margin: 0px;
+				background-color: #000000;
+				overflow: hidden;
+				color: #fff;
+				font-family: monospace;
+			}
+
+			a {
+				color: #fff;
+			}
+
+			#info {
+				
+				position: absolute;
+				top: 10px;
+				width: 100%;
+				z-index: 10;
+				text-align: center;
+			}
+		</style>
+	</head>
+	<body>
+
+		<script src="three.min.js"></script>
+
+		<script src="stats.min.js"></script>
+		<script src="js/TrackballControls.js"></script>
+		
+
+
+		<div id="info">
+			NPR Horse.<br/>
+			Loosely based on a "<a href="http://otherthings.com/uw/loose/">Loose and Sketchy</a>" rendering <a href="http://www.researchgate.net/publication/4195948_A_mediated_reality_environment_using_a_loose_and_sketchy_rendering_technique/file/79e41509828a147ea3.pdf">approach</a>.<br/>
+			Built with <a href="https://github.com/zz85/crayon.js/tree/dev">crayon.js</a> and <a href="http://threejs.org">three.js</a> by <a href="http://twitter.com/blurspline">@blurspline</a>
+			<br/>
+			Credits: <a href="http://dl-stockandresources.deviantart.com/art/Hard-Paper-Texture-334738384">Paper Texture</a>, Horse from <a href="http://ro.me">Ro.me</a>, Art color grading <a href="https://github.com/spite/Wagner">Wagner</a>
+			
+		</div>
+
+		
+
+		<script type="x-shader/x-vertex" id="particle-brush-vs">
+
+			uniform float time;
+
+			uniform sampler2D texture;
+			uniform sampler2D brush;
+			uniform sampler2D color;
+
+			attribute float size;
+
+			// varying vec3 vColor;
+			varying float vEdge;
+
+			float rand(vec2 co){
+				return fract(sin(dot(co.xy ,vec2(12.9898,78.233))) * 43758.5453123);
+			}
+
+			void main() {
+
+				vec2 uv = vec2( (position.xy + 1.) / 2. ) ;
+				// vColor = texture2D( color, uv ).xyz;
+				vEdge = texture2D( texture, uv ).x;
+
+				float t = time * 0.002;
+				// vec3 offset = vec3(0.); 
+				vec3 offset = vec3(0.);
+				// offset = vec3(sin(t + uv.y * 64.132), cos(t + uv.x * 63. ), 0.) / 198.;
+				// vec3(rand(uv.yx * 10. + t), rand(uv.xy + t), 0.) / 20.;
+				
+
+				// modelViewMatrix *
+				vec4 mvPosition = vec4( position + offset, 1.0 );
+
+				gl_PointSize = size;
+
+				if (vEdge < 0.01) gl_PointSize = 0.; // Optimization Trick for faster FPS
+
+				// gl_PointSize = 10.0;
+				// Screen space point
+
+				gl_Position = projectionMatrix * mvPosition;
+
+			}
+
+		</script>
+
+		<script type="x-shader/x-fragment" id="particle-brush-fs">
+
+			uniform sampler2D texture;
+			uniform sampler2D brush;
+			uniform sampler2D color;
+
+			varying vec3 vColor;
+			varying float vEdge;
+
+			void main() {
+
+				if (vEdge < 0.1 ) discard;
+
+				gl_FragColor = vec4(texture2D( brush, gl_PointCoord ).xyz , vEdge * 0.2 + 0.8);
+
+
+			}
+
+		</script>
+
+		<script src="ThreeUtils2.js"></script>
+		<script src="crayon.js"></script>
+
+		<script>
+
+		CRAYON.extends( 'ArtNode', CRAYON.PostProcessNode, {
+
+			init: function() {
+
+
+				var options = {
+					uniforms: {
+
+						"tDiffuse": { type: "t", value: null },
+						"resolution": { type: "v2", value: new THREE.Vector2() }
+
+					},
+
+					vertexShader: getShaderCode('art-vs'),
+					fragmentShader: getShaderCode('art-fs')
+
+				}
+
+				var shaderMaterial = new THREE.ShaderMaterial( options );
+				shaderMaterial.uniforms.resolution.value.set( width, height );
+
+				CRAYON.PostProcessNode.call( this, renderer, shaderMaterial );
+				this.inputs.requires('tDiffuse');
+
+			}
+
+		} );
+		</script>
+
+		<script>
+
+			var camera, scene, renderer;
+			var mesh;
+			var stats;
+			var meshAnim;
+
+			init();
+			animate();
+
+			function init() {
+
+				renderer = new THREE.WebGLRenderer({
+					devicePixelRatio: 1
+				});
+				renderer.setSize( window.innerWidth, window.innerHeight );
+				document.body.appendChild( renderer.domElement );
+
+				//
+
+				stats = new Stats();
+				stats.domElement.style.position = 'absolute';
+				stats.domElement.style.top = '0px';
+				document.body.appendChild( stats.domElement );
+
+				//
+
+				CRAYON.extends( 'SceneNode', CRAYON.ShaderNode, {
+
+					init: function() {
+
+						CRAYON.ShaderNode.call( this );
+						// Renders scene to Render Target				
+						camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 1, 2000 );
+						camera.position.x = 400;
+
+						// camera.position.y = 150;
+						camera.position.z = -500;
+
+						controls = new THREE.TrackballControls( camera );
+
+						scene = new THREE.Scene();
+						// renderer.setClearColor( 0xffffff );
+						// renderer.setClearColor( 0x003300 );
+
+						var geometry = new THREE.CubeGeometry( 200, 200, 200 );
+						
+
+						function phongMaterial(ambient, diffuse, shiny, power) {
+							return new THREE.MeshPhongMaterial({
+								emissive : ambient,
+								color    : diffuse,
+								specular : shiny,
+								shininess: power
+							});
+						}
+
+						function directionalLight(x, y, z, color) {
+							var light = new THREE.DirectionalLight(color);
+							light.position.set(x,y,z).normalize();
+							return light;
+						}
+
+						scene.add(new THREE.AmbientLight(0x131313));
+
+						var material = new THREE.MeshPhongMaterial( { // MeshPhongMaterial MeshLambertMaterial
+							color: 0xfa9204, 
+							// shading: THREE.FlatShading
+						} );
+
+						scene.add(directionalLight(.2,.2,-.4, 0xe0e0e0));
+
+						scene2 = new THREE.Object3D();
+						scene.add(scene2);
+
+
+						var loader = new THREE.JSONLoader( true );
+						loader.load( "models/horse.js", function( geometry ) {
+
+							// mesh = new THREE.Mesh( geometry, new THREE.MeshLambertMaterial( { color: 0x606060, morphTargets: true } ) );
+							// mesh.scale.set( 1.5, 1.5, 1.5 );
+							// scene.add( mesh );
+							// mesh.position.y = -150;
+
+							var material = new THREE.MeshLambertMaterial( { color: 0xffaa55, morphTargets: true, vertexColors: THREE.FaceColors } );
+
+							// var material = new THREE.MeshBasicMaterial( { color: 0xffaa55, morphTargets: true, vertexColors: THREE.FaceColors } );
+
+
+							meshAnim = new THREE.MorphAnimMesh( geometry, material );
+
+							meshAnim.speed = 550;
+							meshAnim.duration = 1000;
+							meshAnim.time = 600 * Math.random();
+
+							meshAnim.position.y = -150;
+							meshAnim.scale.set( 1.5, 1.5, 1.5 );
+
+							scene2.add(meshAnim);
+
+							// meshAnim.castShadow = true;
+							// meshAnim.receiveShadow = true;
+
+						} );
+
+
+						var material = new THREE.MeshPhongMaterial( { color: 0xe0e0e0 } );
+
+						var geometry = new THREE.PlaneGeometry( 6000, 6000 );
+
+						plane = new THREE.Mesh( geometry, material );
+						plane.position.y = - 200;
+						plane.rotation.x = - Math.PI / 2;
+						scene2.add( plane );
+
+						var skyGeo = new THREE.SphereGeometry( 1000, 20, 15 );
+						var skyMat = new THREE.MeshPhongMaterial( {  wireframe: !true, color: 0xfa9204, side: THREE.BackSide,
+						emissive: 0x232323 } );
+
+						scene2.add( new THREE.Mesh( skyGeo, skyMat ) );
+
+					},
+
+
+					render: function() {
+
+						controls.update();
+
+
+						delta = 1000 / 60;
+						if (meshAnim) {
+							meshAnim.updateAnimation( delta );
+							meshAnim.position.y = -150 + Math.sin( Date.now() * 0.005) * 60;
+
+							scene2.position.y = Math.sin( Date.now() * 0.004) * 76;
+						}
+
+						// cube.rotation.y = timer * 0.0005;
+
+						// sphere.position.y = Math.abs( Math.sin( timer * 0.002 ) ) * 150;
+						// sphere.rotation.x = timer * 0.0003;
+						// sphere.rotation.z = timer * 0.0002;
+
+						// sphere2.position.y = Math.abs( Math.sin( timer * 0.004 ) ) * 100;
+						// sphere2.rotation.x = timer * 0.0013;
+						// sphere2.rotation.z = timer * 0.0002;
+
+
+						// mesh.rotation.x += 0.005;
+						// mesh.rotation.y += 0.01;
+
+						// renderer.clear();
+						renderer.render( scene, camera, this.renderTarget );
+					}
+
+				} );
+
+
+
+
+
+			THREE.MultiplyNode = {
+
+				uniforms: {
+
+					"texture1": { type: "t", value: null },
+					"texture2": { type: "t", value: null },
+					"texture3": { type: "t", value: null },
+					"resolution":    { type: "v2", value: new THREE.Vector2( 512, 512 ) },
+				},
+
+				vertexShader: [
+
+					"varying vec2 vUv;",
+
+					"void main() {",
+
+						"vUv = uv;",
+						"gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );",
+
+					"}"
+
+				].join("\n"),
+
+				fragmentShader: [
+
+					"uniform sampler2D texture1;",
+					"uniform sampler2D texture2;",
+					"uniform sampler2D texture3;",
+					"varying vec2 vUv;",
+					"uniform vec2 resolution;",
+
+					
+					"void main(void)",
+					"{",
+						
+						"vec3 c1 = texture2D( texture1, vUv ).rgb;",
+						"vec3 c2 = texture2D( texture2, vUv ).rgb;",
+						"vec3 c3 = texture2D( texture3, vUv / vec2(1., resolution.x / resolution.y) ).rgb;",
+						
+
+						// "gl_FragColor = vec4((1. - (1. - c1) * (1. - c2)), 1.0);",
+						// "gl_FragColor = vec4(c1 * c2, 1.0);",
+						// "gl_FragColor = vec4(1.-c2 , 1.0);",
+						"gl_FragColor = vec4(c1 * (1. - c2) * c3, 1.0);",
+						// "gl_FragColor = vec4(c1 * (1.-c2), 1.0);",
+					"} ",
+
+				].join("\n")
+
+			};
+
+				//
+
+				sceneNode = new CRAYON.SceneNode();
+				sceneDepthNode = new CRAYON.SceneDepthNode( sceneNode );
+				screenNode = new CRAYON.RenderToScreenNode( renderer );
+				edgeNode = new CRAYON.EdgeFilterNode( renderer );
+				multiplyNode = new CRAYON.MultiplyNode( renderer );
+
+				executorNode = new CRAYON.ExecutorNode( renderer );
+
+				particleNode = new CRAYON.ParticleRendererNode( renderer, "textures/circle.png" );
+				//  spark1.png circle.png snowflake7_alpha.png
+
+				artNode = new CRAYON.ArtNode( renderer );
+				blurNode = new CRAYON.BlurNode( renderer, 2, 4 );
+
+				// 0210-2.jpg 0210-4.jpg beige-paper-texture.jpg *
+				// hard_paper.jpg* moleskine_page.jpg paper_texture_by_knightfall_stock.jpg
+				// Paper_texture_v5_by_bashcorpo.jpg
+				var paper = THREE.ImageUtils.loadTexture( "textures/hard_paper.jpg" );
+				multiplyNode.material.uniforms.texture3.value = paper;
+
+				/*
+				sceneNode.connect(edgeNode, 'texture');
+
+				// sceneNode.connect(sceneDepthNode, 'fake');
+				// sceneDepthNode.connect(edgeNode, 'texture');
+
+				edgeNode.connect(particleNode, 'texture');
+				sceneNode.connect(particleNode, 'color');
+				particleNode.connect(screenNode, 'texture');
+				screenNode.connect(executorNode, 'texture');
+				*/
+
+				/**/
+				// Debug Depth
+				// sceneNode.connect(sceneDepthNode, 'texture');
+				// sceneDepthNode.connect(screenNode, 'texture');
+				// screenNode.connect(executorNode, 'texture');
+
+				/*
+				// Debug SCene
+				sceneNode.connect(screenNode, 'texture');
+				screenNode.connect(executorNode, 'texture');
+				*/
+				
+
+				/**/
+				sceneNode.connect(sceneDepthNode);
+				sceneDepthNode.connect(edgeNode, 'texture');
+
+				sceneNode.connect(artNode);
+				artNode.connect(blurNode);
+
+				// sceneNode.connect(blurNode)
+
+				edgeNode.connect(particleNode, 'texture');
+				sceneNode.connect(particleNode, 'color');
+				
+				
+				
+				particleNode.connect(multiplyNode, 'texture2');
+
+				// edgeNode.connect(multiplyNode, 'texture2');
+				blurNode.connect(multiplyNode, 'texture1');
+
+				multiplyNode.connect(screenNode, 'texture');
+				
+				// particleNode.connect(screenNode);
+
+				screenNode.connect(executorNode, 'texture');
+				
+
+
+				// window.addEventListener( 'resize', onWindowResize, false );
+
+
+				// gl = renderer.getContext('2d');
+				// meh = gl.getExtension( "WEBGL_depth_texture" )
+				// console.log(meh);
+				
+
+
+
+			}
+
+			function onWindowResize() {
+
+				camera.aspect = window.innerWidth / window.innerHeight;
+				camera.updateProjectionMatrix();
+
+				renderer.setSize( window.innerWidth, window.innerHeight );
+
+			}
+
+			function animate() {
+
+				requestAnimationFrame( animate );
+				
+				executorNode.renderAll();
+
+				stats.update();
+
+			}
+
+		</script>
+
+	</body>
+</html>

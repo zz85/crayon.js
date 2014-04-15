@@ -97,12 +97,8 @@ CRAYON.extends( 'EdgeFilterNode', CRAYON.PostProcessNode, {
 
 
 /**
- * @author zz85 / https://github.com/zz85 | https://www.lab4games.net/zz85/blog
- *
- * Edge Detection Shader using Sobel filter
- * Based on http://rastergrid.com/blog/2011/01/frei-chen-edge-detector
- *
- * aspect: vec2 of (1/width, 1/height)
+ * @author zz85 
+ *	TODO: Rename this to a Blend Filter which provides photoshop like blending effect
  */
 
 THREE.MultiplyNode = {
@@ -111,6 +107,7 @@ THREE.MultiplyNode = {
 
 		"texture1": { type: "t", value: null },
 		"texture2": { type: "t", value: null },
+		"texture3": { type: "t", value: null },
 		"resolution":    { type: "v2", value: new THREE.Vector2( 512, 512 ) },
 	},
 
@@ -143,9 +140,9 @@ THREE.MultiplyNode = {
 			
 
 			// "gl_FragColor = vec4((1. - (1. - c1) * (1. - c2)), 1.0);",
-			// "gl_FragColor = vec4(c1 * c2, 1.0);",
+			"gl_FragColor = vec4(c1 * c2, 1.0);",
 
-			"gl_FragColor = vec4(c1 * (1.-c2), 1.0);",
+			// "gl_FragColor = vec4(c1 * (1.-c2), 1.0);",
 		"} ",
 
 	].join("\n")
@@ -172,16 +169,11 @@ CRAYON.extends( 'SceneDepthNode', CRAYON.ShaderNode, {
 	init: function( sceneNode ) {
 		CRAYON.ShaderNode.call( this );
 
-		// this.sceneNode = sceneNode;
-		// this.material_depth = new THREE.MeshDepthMaterial({
-		// 	morphTargets: true
-		// });
+		this.sceneNode = sceneNode;
 
-
-		// var depthShader = THREE.ShaderLib.depthRGBA;
-		// var depthUniforms = THREE.UniformsUtils.clone( depthShader.uniforms );
-
-		// this.material_depth = new THREE.ShaderMaterial( { fragmentShader: depthShader.fragmentShader, vertexShader: depthShader.vertexShader, uniforms: depthUniforms, morphTargets: true } );
+		this.material_depth = new THREE.MeshDepthMaterial({
+			morphTargets: true
+		});
 
 		this.inputs.requires('texture');
 
@@ -191,7 +183,6 @@ CRAYON.extends( 'SceneDepthNode', CRAYON.ShaderNode, {
 
 		scene.overrideMaterial = this.material_depth;
 		
-		renderer.clear();
 		renderer.render( scene, camera, this.renderTarget );
 
 		scene.overrideMaterial = null;

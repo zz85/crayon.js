@@ -110,7 +110,6 @@ CRAYON.extends( 'PostProcessNode', CRAYON.ShaderNode, {
 	},
 
 	render: function() {
-		// this.renderer.clear();
 		this.renderer.render( this.scene, this.camera, this.renderTarget );
 	}
 
@@ -145,17 +144,23 @@ CRAYON.extends( 'InputConnector', Object, {
 
 		this.connectedFrom[name] = from;
 
+		// if (this.requirements.length == 2 ) debugger;
+
 		if ( this.node instanceof CRAYON.ExecutorNode ) {
 
 		} else if ( this.node instanceof CRAYON.PostProcessNode ) {
 			
-			if ( ! ( name in this.node.material.uniforms ) ) {
+			if ( name in this.node.material.uniforms ) {
+
+				this.node.material.uniforms[name].value = from.renderTarget;
+				// console.log('Link textures', from.name, '-->',  this.node.name, name);
+				// this.node.incomingRT
+
+			} else {
 				// Sanity check for target uniform, else warn
 				console.log('No uniform found' + name);
 			}
 
-			this.node.material.uniforms[name].value = from.renderTarget;
-			// this.node.incomingRT
 
 
 		} else {
@@ -186,7 +191,6 @@ CRAYON.extends( 'InputConnector', Object, {
 		}
 
 		if ( this.node instanceof CRAYON.ExecutorNode ) { // wildcard
-			console.log('fdfd');
 
 			for (name in this.connectedFrom) {
 
@@ -307,7 +311,6 @@ CRAYON.extends( 'RenderToScreenNode', CRAYON.PostProcessNode, {
 	},
 
 	render: function() {
-		// this.renderer.clear();
 		this.renderer.render( this.scene, this.camera );
 	}
 
@@ -410,8 +413,8 @@ function generateShaders(taps) {
 	vertexShader = vertexShader.replace(/%d/, n).replace(/%s/, coords.join('\n'));
 	fragmentShader = fragmentShader.replace(/%d/, n).replace(/%s/, textures.join('\n'));
 
-	console.log(vertexShader);
-	console.log(fragmentShader);
+	// console.log(vertexShader);
+	// console.log(fragmentShader);
 
 	return {
 		vertexShader: vertexShader,
@@ -562,9 +565,6 @@ CRAYON.extends( 'BlurNode', CRAYON.PostProcessNode, {
 		// this.quad.material = material;
 
 		this.inputs.requires('tDiffuse');
-
-		console.log(this);
-
 	},
 
 	render: function() {
@@ -658,7 +658,7 @@ THREE.BlurShader = {
 
 };;CRAYON.extends( 'ParticleRendererNode', CRAYON.PostProcessNode, {
 
-	init: function( renderer ) {
+	init: function( renderer, textureUrl ) {
 		
 
 		var attributes = {
@@ -667,7 +667,8 @@ THREE.BlurShader = {
 
 		};
 
-		var texture = THREE.ImageUtils.loadTexture( "textures/circle.png" );  // spark1.png circle.png snowflake7_alpha.png
+		textureUrl = textureUrl || "textures/circle.png";
+		var texture = THREE.ImageUtils.loadTexture( textureUrl );
 
 		var uniforms = {
 
@@ -722,8 +723,8 @@ THREE.BlurShader = {
 			positions[ i + 1 ] = y ;
 			positions[ i + 2 ] = 0 ;
 
-			// width / 500 
-			size[i] = 0.4 * (Math.random() * 4 + 8);
+			//
+			size[i] =  width / 1000 * (Math.random() * 2 + 2);
 
 		}
 
@@ -845,12 +846,8 @@ CRAYON.extends( 'EdgeFilterNode', CRAYON.PostProcessNode, {
 
 
 /**
- * @author zz85 / https://github.com/zz85 | https://www.lab4games.net/zz85/blog
- *
- * Edge Detection Shader using Sobel filter
- * Based on http://rastergrid.com/blog/2011/01/frei-chen-edge-detector
- *
- * aspect: vec2 of (1/width, 1/height)
+ * @author zz85 
+ *	TODO: Rename this to a Blend Filter which provides photoshop like blending effect
  */
 
 THREE.MultiplyNode = {
@@ -859,6 +856,7 @@ THREE.MultiplyNode = {
 
 		"texture1": { type: "t", value: null },
 		"texture2": { type: "t", value: null },
+		"texture3": { type: "t", value: null },
 		"resolution":    { type: "v2", value: new THREE.Vector2( 512, 512 ) },
 	},
 
@@ -891,9 +889,9 @@ THREE.MultiplyNode = {
 			
 
 			// "gl_FragColor = vec4((1. - (1. - c1) * (1. - c2)), 1.0);",
-			// "gl_FragColor = vec4(c1 * c2, 1.0);",
+			"gl_FragColor = vec4(c1 * c2, 1.0);",
 
-			"gl_FragColor = vec4(c1 * (1.-c2), 1.0);",
+			// "gl_FragColor = vec4(c1 * (1.-c2), 1.0);",
 		"} ",
 
 	].join("\n")
@@ -920,16 +918,11 @@ CRAYON.extends( 'SceneDepthNode', CRAYON.ShaderNode, {
 	init: function( sceneNode ) {
 		CRAYON.ShaderNode.call( this );
 
-		// this.sceneNode = sceneNode;
-		// this.material_depth = new THREE.MeshDepthMaterial({
-		// 	morphTargets: true
-		// });
+		this.sceneNode = sceneNode;
 
-
-		// var depthShader = THREE.ShaderLib.depthRGBA;
-		// var depthUniforms = THREE.UniformsUtils.clone( depthShader.uniforms );
-
-		// this.material_depth = new THREE.ShaderMaterial( { fragmentShader: depthShader.fragmentShader, vertexShader: depthShader.vertexShader, uniforms: depthUniforms, morphTargets: true } );
+		this.material_depth = new THREE.MeshDepthMaterial({
+			morphTargets: true
+		});
 
 		this.inputs.requires('texture');
 
@@ -939,7 +932,6 @@ CRAYON.extends( 'SceneDepthNode', CRAYON.ShaderNode, {
 
 		scene.overrideMaterial = this.material_depth;
 		
-		renderer.clear();
 		renderer.render( scene, camera, this.renderTarget );
 
 		scene.overrideMaterial = null;

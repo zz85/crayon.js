@@ -110,7 +110,6 @@ CRAYON.extends( 'PostProcessNode', CRAYON.ShaderNode, {
 	},
 
 	render: function() {
-		// this.renderer.clear();
 		this.renderer.render( this.scene, this.camera, this.renderTarget );
 	}
 
@@ -145,17 +144,23 @@ CRAYON.extends( 'InputConnector', Object, {
 
 		this.connectedFrom[name] = from;
 
+		// if (this.requirements.length == 2 ) debugger;
+
 		if ( this.node instanceof CRAYON.ExecutorNode ) {
 
 		} else if ( this.node instanceof CRAYON.PostProcessNode ) {
 			
-			if ( ! ( name in this.node.material.uniforms ) ) {
+			if ( name in this.node.material.uniforms ) {
+
+				this.node.material.uniforms[name].value = from.renderTarget;
+				// console.log('Link textures', from.name, '-->',  this.node.name, name);
+				// this.node.incomingRT
+
+			} else {
 				// Sanity check for target uniform, else warn
 				console.log('No uniform found' + name);
 			}
 
-			this.node.material.uniforms[name].value = from.renderTarget;
-			// this.node.incomingRT
 
 
 		} else {
@@ -186,7 +191,6 @@ CRAYON.extends( 'InputConnector', Object, {
 		}
 
 		if ( this.node instanceof CRAYON.ExecutorNode ) { // wildcard
-			console.log('fdfd');
 
 			for (name in this.connectedFrom) {
 
@@ -307,7 +311,6 @@ CRAYON.extends( 'RenderToScreenNode', CRAYON.PostProcessNode, {
 	},
 
 	render: function() {
-		// this.renderer.clear();
 		this.renderer.render( this.scene, this.camera );
 	}
 
