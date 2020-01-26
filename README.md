@@ -31,7 +31,7 @@ A complex code sample showcasing the API flexibility
 	
 ```
 
-##Q&A
+## Q&A
 
 _Why Crayon?_
 * Useful for prototyping shader systems
